@@ -33,6 +33,10 @@ public interface InventoryService {
     String getWaitingRoomFormattedStatus(Long eventId, String userId);
     List<String> admitWaitingRoomUsers(Long eventId, int count);
 
+    // Flash Sale Concurrency Simulation
+    FlashSaleSummaryDto simulateFlashSale(int totalUsers, int totalTickets);
+    String getFlashSaleFormattedSummary(int totalUsers, int totalTickets);
+
     // 7. Temporary Checkout State (Redis Key: checkout:{sessionId})
     CheckoutSessionDto initiateCheckout(CheckoutSessionDto request);
     CheckoutSessionDto getCheckoutSession(String sessionId);

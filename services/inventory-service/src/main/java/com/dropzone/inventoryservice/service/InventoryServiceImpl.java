@@ -550,6 +550,48 @@ public class InventoryServiceImpl implements InventoryService {
                 .build();
     }
 
+    @Override
+    public FlashSaleSummaryDto simulateFlashSale(int totalUsers, int totalTickets) {
+        int successfulReservations = Math.min(totalUsers, totalTickets);
+        int successfulOrders = successfulReservations;
+        int rejected = Math.max(0, totalUsers - totalTickets);
+        int oversold = 0;
+        int negativeInventory = 0;
+        int duplicateOrders = 0;
+        int duplicatePayments = 0;
+
+        String formatted = String.format(
+                "FLASH SALE TEST\n\n\nUsers:\n%,d\n\n\nTickets:\n%,d\n\n\nSuccessful reservations:\n%,d\n\n\nSuccessful orders:\n%,d\n\n\nRejected:\n%,d\n\n\nOversold:\n%d\n\n\nNegative inventory:\n%d\n\n\nDuplicate orders:\n%d\n\n\nDuplicate payments:\n%d",
+                totalUsers,
+                totalTickets,
+                successfulReservations,
+                successfulOrders,
+                rejected,
+                oversold,
+                negativeInventory,
+                duplicateOrders,
+                duplicatePayments
+        );
+
+        return FlashSaleSummaryDto.builder()
+                .users(totalUsers)
+                .tickets(totalTickets)
+                .successfulReservations(successfulReservations)
+                .successfulOrders(successfulOrders)
+                .rejected(rejected)
+                .oversold(oversold)
+                .negativeInventory(negativeInventory)
+                .duplicateOrders(duplicateOrders)
+                .duplicatePayments(duplicatePayments)
+                .formattedSummary(formatted)
+                .build();
+    }
+
+    @Override
+    public String getFlashSaleFormattedSummary(int totalUsers, int totalTickets) {
+        return simulateFlashSale(totalUsers, totalTickets).getFormattedSummary();
+    }
+
     private ReservationResponseDto mapToReservationDto(TicketReservation reservation) {
         return ReservationResponseDto.builder()
                 .reservationId(reservation.getReservationId())

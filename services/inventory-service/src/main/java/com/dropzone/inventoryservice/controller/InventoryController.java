@@ -123,6 +123,23 @@ public class InventoryController {
         return ResponseEntity.ok(admitted);
     }
 
+    // Flash Sale Concurrency Simulation
+    @PostMapping("/flash-sale/simulate")
+    public ResponseEntity<FlashSaleSummaryDto> simulateFlashSale(
+            @RequestParam(defaultValue = "50000") int totalUsers,
+            @RequestParam(defaultValue = "10000") int totalTickets) {
+        FlashSaleSummaryDto summary = inventoryService.simulateFlashSale(totalUsers, totalTickets);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping(value = "/flash-sale/formatted", produces = "text/plain")
+    public ResponseEntity<String> getFlashSaleFormattedSummary(
+            @RequestParam(defaultValue = "50000") int totalUsers,
+            @RequestParam(defaultValue = "10000") int totalTickets) {
+        String formatted = inventoryService.getFlashSaleFormattedSummary(totalUsers, totalTickets);
+        return ResponseEntity.ok(formatted);
+    }
+
     // 7. Temporary Checkout State (Redis Key: checkout:{sessionId})
     @PostMapping("/checkout/initiate")
     public ResponseEntity<CheckoutSessionDto> initiateCheckout(@RequestBody CheckoutSessionDto request) {
