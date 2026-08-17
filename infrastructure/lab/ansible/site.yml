@@ -1,0 +1,159 @@
+---
+# Dropzone Multi-Node Staging Ansible Master Provisioning Playbook
+
+# =========================================================================
+# 1. ALL SERVERS: Docker, users, folders, system tuning & security
+# =========================================================================
+- name: Provision All Servers (Docker, Security, Directories)
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache and install base packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+          - git
+          - ufw
+          - htop
+          - jq
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker Engine & Compose plugin
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled and running
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add vagrant user to docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: true
+
+    - name: Create Dropzone base directory structure
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: docker
+        mode: '0775'
+      loop:
+        - /opt/dropzone
+        - /opt/dropzone/config
+        - /opt/dropzone/logs
+        - /opt/dropzone/data
+
+    - name: Set sysctl parameters for high concurrency (Flash Sale readiness)
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: true
+      loop:
+        - { name: 'vm.max_map_count', value: '262144' }
+        - { name: 'net.core.somaxconn', value: '1024' }
+
+# =========================================================================
+# 2. EDGE SERVER (edge-01): NGINX Ingress Proxy
+# =========================================================================
+- name: Provision Edge Ingress (edge-01)
+  hosts: edge
+  become: true
+  tasks:
+    - name: Install NGINX web server
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure NGINX service is enabled and running
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Create Dropzone NGINX proxy directory
+      file:
+        path: /opt/dropzone/nginx
+        state: directory
+        owner: vagrant
+        group: docker
+        mode: '0775'
+
+# =========================================================================
+# 3. APP SERVERS (app-01, app-02): Microservices Runtime Environment
+# =========================================================================
+- name: Provision Application Servers (app-01, app-02)
+  hosts: app
+  become: true
+  tasks:
+    - name: Create application deployment directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: docker
+        mode: '0775'
+      loop:
+        - /opt/dropzone/apps
+        - /opt/dropzone/apps/env
+
+    - name: Create shared Docker overlay network (dropzone-network)
+      docker_network:
+        name: dropzone-network
+        driver: bridge
+        state: present
+
+# =========================================================================
+# 4. INFRA SERVER (infra-01): Databases, Messaging & Discovery Services
+# =========================================================================
+- name: Provision Infrastructure Server (infra-01)
+  hosts: infra
+  become: true
+  tasks:
+    - name: Create infrastructure data persistence directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: docker
+        mode: '0777'
+      loop:
+        - /opt/dropzone/infra
+        - /opt/dropzone/infra/postgres
+        - /opt/dropzone/infra/redis
+        - /opt/dropzone/infra/kafka
+        - /opt/dropzone/infra/rabbitmq
+        - /opt/dropzone/infra/keycloak
+
+    - name: Create infrastructure Docker overlay network (dropzone-network)
+      docker_network:
+        name: dropzone-network
+        driver: bridge
+        state: present
