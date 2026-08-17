@@ -59,6 +59,27 @@ services:
       timeout: 5s
       retries: 5
 
+  order-service-scaled:
+    image: dropzone/order-service:1.4.0
+    container_name: dropzone-order-service-scaled
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_CLOUD_CONFIG_URI: http://192.168.56.13:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://192.168.56.13:8761/eureka/
+      POSTGRES_HOST: 192.168.56.13
+      REDIS_HOST: 192.168.56.13
+      KAFKA_BOOTSTRAP_SERVERS: 192.168.56.13:9092
+    networks:
+      - dropzone-app1-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   dropzone-app1-net:
     driver: bridge
