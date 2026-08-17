@@ -1,0 +1,63 @@
+---
+# Step 20 — Automated Rollback Deployment Playbook (Failed 1.2.0 -> Rollback to 1.1.0)
+
+- name: Perform Automated Rollback Deployment
+  hosts: app-02
+  become: true
+  vars:
+    service_name: "order-service"
+    failed_tag: "1.2.0"
+    stable_tag: "1.1.0"
+  tasks:
+    - name: Attempt Deployment of Broken Image Tag 1.2.0
+      replace:
+        path: /opt/dropzone/apps/app2/docker-compose.yml
+        regexp: 'image: dropzone/order-service:.*'
+        replace: 'image: dropzone/order-service:{{ failed_tag }}'
+
+    - name: Trigger Container Update for 1.2.0
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/apps/app2
+        state: present
+      ignore_errors: true
+
+    - name: Perform Post-Deployment Health Check for 1.2.0
+      uri:
+        url: "http://localhost:8083/actuator/health"
+        status_code: 200
+      register: health_120
+      ignore_errors: true
+      failed_when: false
+
+    - name: Log Health Check Failure for Version 1.2.0
+      debug:
+        msg: "[!] DEPLOYMENT FAILED: Version 1.2.0 health check failed (Status: {{ health_120.status | default(500) }}). Initiating immediate rollback to {{ stable_tag }}..."
+      when: health_120.status | default(500) != 200
+
+    - name: Execute Automated Rollback to Known-Good Version 1.1.0
+      replace:
+        path: /opt/dropzone/apps/app2/docker-compose.yml
+        regexp: 'image: dropzone/order-service:.*'
+        replace: 'image: dropzone/order-service:{{ stable_tag }}'
+      when: health_120.status | default(500) != 200
+
+    - name: Restore Stable Container Stack via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/apps/app2
+        state: present
+      when: health_120.status | default(500) != 200
+
+    - name: Verify Restored Stable Service Health Check (1.1.0)
+      uri:
+        url: "http://localhost:8083/actuator/health"
+        status_code: 200
+      register: restored_health
+      until: restored_health.status == 200
+      retries: 10
+      delay: 2
+
+    - name: Display Final Rollback Status Summary
+      debug:
+        msg: >
+          ROLLBACK SUCCESSFUL:
+          Failed Tag: {{ failed_tag }} (FAILED) | Restored Tag: {{ stable_tag }} (RESTORED) | Health Status: {{ restored_health.json.status }}
