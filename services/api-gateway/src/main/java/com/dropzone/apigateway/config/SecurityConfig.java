@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
+
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -28,6 +33,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/actuator/**", "/eureka/**", "/api/chaos", "/api/chaos/**", "/chaos", "/chaos/**", "/test-report", "/api/test-report", "/testing/**", "/ci-pipeline", "/api/ci-pipeline", "/ci/**").permitAll()
                 .pathMatchers("/api/orders", "/api/orders/**", "/orders", "/orders/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
@@ -63,5 +69,18 @@ public class SecurityConfig {
         return roles.stream()
                 .map(roleName -> new SimpleGrantedAuthority("ROLE_" + roleName))
                 .collect(Collectors.toList());
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
