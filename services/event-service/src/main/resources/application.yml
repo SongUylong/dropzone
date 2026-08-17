@@ -7,7 +7,7 @@ spring:
   profiles:
     active: development
   config:
-    import: "optional:configserver:http://localhost:8888"
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
 
 eureka:
   instance:
@@ -15,4 +15,4 @@ eureka:
     instance-id: ${spring.application.name}:${random.value}
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
