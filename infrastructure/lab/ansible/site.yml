@@ -109,11 +109,11 @@
 # =========================================================================
 # 3. APP SERVERS (app-01, app-02): Microservices Runtime Environment
 # =========================================================================
-- name: Provision Application Servers (app-01, app-02)
-  hosts: app
+- name: Provision Application Server app-01
+  hosts: app-01
   become: true
   tasks:
-    - name: Create application deployment directories
+    - name: Create application deployment directories on app-01
       file:
         path: "{{ item }}"
         state: directory
@@ -122,12 +122,47 @@
         mode: '0775'
       loop:
         - /opt/dropzone/apps
-        - /opt/dropzone/apps/env
+        - /opt/dropzone/apps/app1
 
-    - name: Create shared Docker overlay network (dropzone-network)
-      docker_network:
-        name: dropzone-network
-        driver: bridge
+    - name: Copy app-01 Docker Compose stack (user, event, inventory)
+      copy:
+        src: ../docker/docker-compose-app1.yml
+        dest: /opt/dropzone/apps/app1/docker-compose.yml
+        owner: vagrant
+        group: docker
+        mode: '0644'
+
+    - name: Ensure app-01 microservices are running via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/apps/app1
+        state: present
+
+- name: Provision Application Server app-02
+  hosts: app-02
+  become: true
+  tasks:
+    - name: Create application deployment directories on app-02
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: docker
+        mode: '0775'
+      loop:
+        - /opt/dropzone/apps
+        - /opt/dropzone/apps/app2
+
+    - name: Copy app-02 Docker Compose stack (order, payment, notification)
+      copy:
+        src: ../docker/docker-compose-app2.yml
+        dest: /opt/dropzone/apps/app2/docker-compose.yml
+        owner: vagrant
+        group: docker
+        mode: '0644'
+
+    - name: Ensure app-02 microservices are running via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/apps/app2
         state: present
 
 # =========================================================================
