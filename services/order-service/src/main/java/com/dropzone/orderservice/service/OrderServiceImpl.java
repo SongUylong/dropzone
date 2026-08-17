@@ -4,7 +4,7 @@ import com.dropzone.orderservice.dto.CreateOrderRequest;
 import com.dropzone.orderservice.exception.InvalidOrderStateException;
 import com.dropzone.orderservice.exception.OrderNotFoundException;
 import com.dropzone.orderservice.model.Order;
-import com.dropzone.orderservice.model.OrderDto;
+import com.dropzone.orderservice.dto.OrderDto;
 import com.dropzone.orderservice.model.OrderStatus;
 import com.dropzone.orderservice.repository.OrderRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -31,10 +32,65 @@ public class OrderServiceImpl implements OrderService {
 
     private static final String CACHE_KEY_PREFIX = "cache:order:";
     private static final String CACHE_KEY_NUM_PREFIX = "cache:order:number:";
+    private static final String CACHE_KEY_IDEMPOTENCY_PREFIX = "idempotency:order:";
+    private static final String CACHE_KEY_IDEMPOTENCY_LOCK = "idempotency:lock:";
 
     @Override
     @Transactional
     public OrderDto createOrder(CreateOrderRequest request) {
+        return createOrder(request, null);
+    }
+
+    @Override
+    @Transactional
+    public OrderDto createOrder(CreateOrderRequest request, String idempotencyKeyHeader) {
+        String activeKey = (idempotencyKeyHeader != null && !idempotencyKeyHeader.isBlank())
+                ? idempotencyKeyHeader
+                : request.getIdempotencyKey();
+
+        if (activeKey != null && !activeKey.isBlank()) {
+            activeKey = activeKey.trim();
+
+            // 1. Redis Cache Check
+            String cacheKey = CACHE_KEY_IDEMPOTENCY_PREFIX + activeKey;
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
+                try {
+                    OrderDto dto = objectMapper.convertValue(cached, OrderDto.class);
+                    log.info("Idempotent hit from Redis for key: {}", activeKey);
+                    return dto;
+                } catch (Exception e) {
+                    log.warn("Failed to deserialize cached idempotent OrderDto: {}", e.getMessage());
+                }
+            }
+
+            // 2. DB Unique Constraint Check
+            Optional<Order> existingOpt = orderRepository.findByIdempotencyKey(activeKey);
+            if (existingOpt.isPresent()) {
+                OrderDto dto = mapToDto(existingOpt.get());
+                redisTemplate.opsForValue().set(cacheKey, dto, 24, TimeUnit.HOURS);
+                log.info("Idempotent hit from DB unique constraint for key: {}", activeKey);
+                return dto;
+            }
+
+            // 3. Distributed Redis Lock
+            String lockKey = CACHE_KEY_IDEMPOTENCY_LOCK + activeKey;
+            Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "LOCKED", 10, TimeUnit.SECONDS);
+            if (Boolean.FALSE.equals(acquired)) {
+                // Lock held by another thread, poll once or re-check DB
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException ignored) {
+                }
+                Optional<Order> recheck = orderRepository.findByIdempotencyKey(activeKey);
+                if (recheck.isPresent()) {
+                    OrderDto dto = mapToDto(recheck.get());
+                    redisTemplate.opsForValue().set(cacheKey, dto, 24, TimeUnit.HOURS);
+                    return dto;
+                }
+            }
+        }
+
         String orderNumber = request.getCustomOrderNumber();
         if (orderNumber == null || orderNumber.trim().isEmpty()) {
             orderNumber = "DZ" + (10000 + new Random().nextInt(90000));
@@ -48,6 +104,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = Order.builder()
                 .orderNumber(orderNumber)
+                .idempotencyKey(activeKey)
                 .userId(request.getUserId() != null ? request.getUserId() : "123")
                 .eventId(request.getEventId() != null ? request.getEventId() : 1L)
                 .eventName(request.getEventName() != null ? request.getEventName() : "Coldplay Concert")
@@ -60,21 +117,45 @@ public class OrderServiceImpl implements OrderService {
                 .reservationId(request.getReservationId())
                 .build();
 
-        Order saved = orderRepository.save(order);
-        log.info("Order created in PENDING state with orderNumber: {}", saved.getOrderNumber());
+        Order saved;
+        try {
+            saved = orderRepository.save(order);
+            log.info("Order created in PENDING state with orderNumber: {}", saved.getOrderNumber());
 
-        // PENDING -> RESERVED
-        saved.setStatus(OrderStatus.RESERVED);
-        saved = orderRepository.save(saved);
-        log.info("Order {} transitioned to RESERVED", saved.getOrderNumber());
+            // PENDING -> RESERVED
+            saved.setStatus(OrderStatus.RESERVED);
+            saved = orderRepository.save(saved);
+            log.info("Order {} transitioned to RESERVED", saved.getOrderNumber());
 
-        // RESERVED -> PAYMENT_PENDING
-        saved.setStatus(OrderStatus.PAYMENT_PENDING);
-        saved = orderRepository.save(saved);
-        log.info("Order {} transitioned to PAYMENT_PENDING", saved.getOrderNumber());
+            // RESERVED -> PAYMENT_PENDING
+            saved.setStatus(OrderStatus.PAYMENT_PENDING);
+            saved = orderRepository.save(saved);
+            log.info("Order {} transitioned to PAYMENT_PENDING", saved.getOrderNumber());
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("Database unique constraint triggered for idempotencyKey: {}, fetching existing order", activeKey);
+            if (activeKey != null) {
+                Optional<Order> existingOpt = orderRepository.findByIdempotencyKey(activeKey);
+                if (existingOpt.isPresent()) {
+                    OrderDto dto = mapToDto(existingOpt.get());
+                    redisTemplate.opsForValue().set(CACHE_KEY_IDEMPOTENCY_PREFIX + activeKey, dto, 24, TimeUnit.HOURS);
+                    return dto;
+                }
+            }
+            throw e;
+        } finally {
+            if (activeKey != null) {
+                redisTemplate.delete(CACHE_KEY_IDEMPOTENCY_LOCK + activeKey);
+            }
+        }
 
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
+
+        if (activeKey != null && !activeKey.isBlank()) {
+            redisTemplate.opsForValue().set(CACHE_KEY_IDEMPOTENCY_PREFIX + activeKey, dto, 24, TimeUnit.HOURS);
+        }
+
         return dto;
     }
 
@@ -292,6 +373,7 @@ public class OrderServiceImpl implements OrderService {
         return OrderDto.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .idempotencyKey(order.getIdempotencyKey())
                 .userId(order.getUserId())
                 .eventId(order.getEventId())
                 .eventName(order.getEventName())

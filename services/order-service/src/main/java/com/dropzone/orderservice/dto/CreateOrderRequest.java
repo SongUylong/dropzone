@@ -21,5 +21,6 @@ public class CreateOrderRequest {
     private Integer quantity;
     private BigDecimal unitPrice;
     private String customOrderNumber; // Optional, e.g. "DZ10239"
+    private String idempotencyKey;    // Optional, for idempotent order creation
     private String reservationId;
 }

@@ -1,5 +1,6 @@
-package com.dropzone.orderservice.model;
+package com.dropzone.orderservice.dto;
 
+import com.dropzone.orderservice.model.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class OrderDto {
 
     private Long id;
     private String orderNumber;
+    private String idempotencyKey;
     private String userId;
     private Long eventId;
     private String eventName;

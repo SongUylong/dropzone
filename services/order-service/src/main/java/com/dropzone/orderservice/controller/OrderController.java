@@ -2,7 +2,7 @@ package com.dropzone.orderservice.controller;
 
 import com.dropzone.orderservice.dto.CreateOrderRequest;
 import com.dropzone.orderservice.dto.UpdateOrderStatusRequest;
-import com.dropzone.orderservice.model.OrderDto;
+import com.dropzone.orderservice.dto.OrderDto;
 import com.dropzone.orderservice.model.OrderStatus;
 import com.dropzone.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,14 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderDto> createOrder(@RequestBody CreateOrderRequest request) {
-        OrderDto order = orderService.createOrder(request);
+    public ResponseEntity<OrderDto> createOrder(
+            @RequestBody CreateOrderRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKeyHeader,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String xIdempotencyKeyHeader) {
+        String key = idempotencyKeyHeader != null && !idempotencyKeyHeader.isBlank() 
+                ? idempotencyKeyHeader 
+                : xIdempotencyKeyHeader;
+        OrderDto order = orderService.createOrder(request, key);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
