@@ -16,6 +16,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    // 1. Inventory Management
     @PostMapping
     public ResponseEntity<InventoryDto> createOrUpdateInventory(@RequestBody CreateInventoryRequest request) {
         InventoryDto dto = inventoryService.createOrUpdateInventory(request);
@@ -34,6 +35,7 @@ public class InventoryController {
         return ResponseEntity.ok(list);
     }
 
+    // 2. Ticket Reservations & Expiration
     @PostMapping("/reserve")
     public ResponseEntity<ReservationResponseDto> reserveTickets(@RequestBody ReserveTicketRequest request) {
         ReservationResponseDto dto = inventoryService.reserveTickets(request);
@@ -56,5 +58,78 @@ public class InventoryController {
     public ResponseEntity<ReservationResponseDto> cancelReservation(@PathVariable String reservationId) {
         ReservationResponseDto dto = inventoryService.cancelReservation(reservationId);
         return ResponseEntity.ok(dto);
+    }
+
+    // 3. Idempotency (Redis Key: idempotency:{key})
+    @PostMapping("/idempotency/{key}")
+    public ResponseEntity<IdempotencyResponseDto> checkIdempotency(
+            @PathVariable String key,
+            @RequestBody(required = false) String payload) {
+        IdempotencyResponseDto dto = inventoryService.checkAndStoreIdempotencyKey(key, payload);
+        return ResponseEntity.ok(dto);
+    }
+
+    // 4. Rate Limiting (Redis Key: rate_limit:{key})
+    @GetMapping("/rate-limit/{key}")
+    public ResponseEntity<RateLimitStatusDto> checkRateLimit(
+            @PathVariable String key,
+            @RequestParam(defaultValue = "5") long limit,
+            @RequestParam(defaultValue = "10") long windowSeconds) {
+        RateLimitStatusDto dto = inventoryService.checkRateLimit(key, limit, windowSeconds);
+        if (!dto.isAllowed()) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(dto);
+        }
+        return ResponseEntity.ok(dto);
+    }
+
+    // 5. Caching (Redis Key: cache:inventory:{categoryId})
+    @GetMapping("/cached/category/{categoryId}")
+    public ResponseEntity<InventoryDto> getCachedInventoryByCategoryId(@PathVariable Long categoryId) {
+        InventoryDto dto = inventoryService.getCachedInventoryByCategoryId(categoryId);
+        return ResponseEntity.ok(dto);
+    }
+
+    // 6. Flash Sale Waiting Room (Redis Keys: waiting_room:queue:{eventId}, waiting_room:token:{userId})
+    @PostMapping("/waiting-room/{eventId}/join")
+    public ResponseEntity<WaitingRoomStatusDto> joinWaitingRoom(
+            @PathVariable Long eventId,
+            @RequestParam String userId) {
+        WaitingRoomStatusDto dto = inventoryService.joinWaitingRoom(eventId, userId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/waiting-room/{eventId}/status")
+    public ResponseEntity<WaitingRoomStatusDto> getWaitingRoomStatus(
+            @PathVariable Long eventId,
+            @RequestParam String userId) {
+        WaitingRoomStatusDto dto = inventoryService.getWaitingRoomStatus(eventId, userId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/waiting-room/{eventId}/admit")
+    public ResponseEntity<List<String>> admitWaitingRoomUsers(
+            @PathVariable Long eventId,
+            @RequestParam(defaultValue = "10") int count) {
+        List<String> admitted = inventoryService.admitWaitingRoomUsers(eventId, count);
+        return ResponseEntity.ok(admitted);
+    }
+
+    // 7. Temporary Checkout State (Redis Key: checkout:{sessionId})
+    @PostMapping("/checkout/initiate")
+    public ResponseEntity<CheckoutSessionDto> initiateCheckout(@RequestBody CheckoutSessionDto request) {
+        CheckoutSessionDto dto = inventoryService.initiateCheckout(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
+    @GetMapping("/checkout/{sessionId}")
+    public ResponseEntity<CheckoutSessionDto> getCheckoutSession(@PathVariable String sessionId) {
+        CheckoutSessionDto dto = inventoryService.getCheckoutSession(sessionId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/checkout/{sessionId}")
+    public ResponseEntity<Void> clearCheckoutSession(@PathVariable String sessionId) {
+        inventoryService.clearCheckoutSession(sessionId);
+        return ResponseEntity.noContent().build();
     }
 }

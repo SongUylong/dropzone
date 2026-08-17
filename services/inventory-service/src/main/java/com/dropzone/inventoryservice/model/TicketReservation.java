@@ -15,6 +15,7 @@ public class TicketReservation implements Serializable {
     private String reservationId;
     private String userId;
     private Long eventId;
+    private String eventName;
     private Long ticketCategoryId;
     private String categoryName;
     private Integer quantity;

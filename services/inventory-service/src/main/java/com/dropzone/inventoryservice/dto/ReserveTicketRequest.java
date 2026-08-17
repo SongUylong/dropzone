@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class ReserveTicketRequest {
     private String userId;
     private Long eventId;
+    private String eventName;
     private Long ticketCategoryId;
     private Integer quantity;
 }

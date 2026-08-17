@@ -12,16 +12,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -40,8 +39,16 @@ public class InventoryServiceImpl implements InventoryService {
     private static final String RESERVATION_KEY_PREFIX = "reservation:";
     private static final String ACTIVE_RESERVATIONS_INDEX = "active_reservations";
 
+    private static final String IDEMPOTENCY_KEY_PREFIX = "idempotency:";
+    private static final String RATE_LIMIT_KEY_PREFIX = "rate_limit:";
+    private static final String WAITING_ROOM_QUEUE_PREFIX = "waiting_room:queue:";
+    private static final String WAITING_ROOM_TOKEN_PREFIX = "waiting_room:token:";
+    private static final String CHECKOUT_KEY_PREFIX = "checkout:";
+
+    // 1. Inventory Management
     @Override
     @Transactional
+    @CacheEvict(value = "inventories", key = "#request.ticketCategoryId")
     public InventoryDto createOrUpdateInventory(CreateInventoryRequest request) {
         Optional<Inventory> existing = inventoryRepository.findByTicketCategoryId(request.getTicketCategoryId());
 
@@ -83,8 +90,10 @@ public class InventoryServiceImpl implements InventoryService {
                 .collect(Collectors.toList());
     }
 
+    // 2. Ticket Reservations & Expiration (Redis Key: reservation:{reservationId})
     @Override
     @Transactional
+    @CacheEvict(value = "inventories", key = "#request.ticketCategoryId")
     public ReservationResponseDto reserveTickets(ReserveTicketRequest request) {
         Inventory inventory = inventoryRepository.findByTicketCategoryId(request.getTicketCategoryId())
                 .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for ticket category ID: " + request.getTicketCategoryId()));
@@ -102,10 +111,13 @@ public class InventoryServiceImpl implements InventoryService {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(reservationTtlSeconds);
 
+        String eventName = request.getEventName() != null ? request.getEventName() : "Event-" + request.getEventId();
+
         TicketReservation reservation = TicketReservation.builder()
                 .reservationId(reservationId)
                 .userId(request.getUserId())
                 .eventId(request.getEventId())
+                .eventName(eventName)
                 .ticketCategoryId(request.getTicketCategoryId())
                 .categoryName(inventory.getCategoryName())
                 .quantity(request.getQuantity())
@@ -221,6 +233,219 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
+    // 3. Idempotency (Redis Key: idempotency:{key})
+    @Override
+    public IdempotencyResponseDto checkAndStoreIdempotencyKey(String idempotencyKey, String payload) {
+        String redisKey = IDEMPOTENCY_KEY_PREFIX + idempotencyKey;
+        Object cached = redisTemplate.opsForValue().get(redisKey);
+
+        if (cached != null) {
+            log.info("Idempotency hit for key: {}", idempotencyKey);
+            return IdempotencyResponseDto.builder()
+                    .idempotencyKey(idempotencyKey)
+                    .processed(true)
+                    .cachedResult(cached)
+                    .message("Duplicate request detected. Returning cached response.")
+                    .build();
+        }
+
+        Map<String, Object> resultPayload = Map.of(
+                "status", "PROCESSED",
+                "timestamp", Instant.now().toString(),
+                "payload", payload != null ? payload : "success"
+        );
+
+        redisTemplate.opsForValue().set(redisKey, resultPayload, 24, TimeUnit.HOURS);
+
+        return IdempotencyResponseDto.builder()
+                .idempotencyKey(idempotencyKey)
+                .processed(false)
+                .cachedResult(resultPayload)
+                .message("Request processed and idempotency key saved.")
+                .build();
+    }
+
+    // 4. Rate Limiting (Redis Key: rate_limit:{key})
+    @Override
+    public RateLimitStatusDto checkRateLimit(String key, long maxRequests, long windowSeconds) {
+        String redisKey = RATE_LIMIT_KEY_PREFIX + key;
+        Long count = redisTemplate.opsForValue().increment(redisKey);
+
+        if (count != null && count == 1) {
+            redisTemplate.expire(redisKey, windowSeconds, TimeUnit.SECONDS);
+        }
+
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+        boolean allowed = count != null && count <= maxRequests;
+
+        return RateLimitStatusDto.builder()
+                .key(key)
+                .allowed(allowed)
+                .currentCount(count != null ? count : 0)
+                .limit(maxRequests)
+                .windowSeconds(windowSeconds)
+                .ttlSeconds(ttl != null ? ttl : 0)
+                .build();
+    }
+
+    // 5. Caching (Redis Key: cache:inventory:{categoryId})
+    @Override
+    public InventoryDto getCachedInventoryByCategoryId(Long ticketCategoryId) {
+        String cacheKey = "cache:inventory:" + ticketCategoryId;
+        Object cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            if (cached instanceof InventoryDto dto) {
+                log.info("Cache hit for ticket category ID: {}", ticketCategoryId);
+                return dto;
+            }
+            try {
+                InventoryDto dto = objectMapper.convertValue(cached, InventoryDto.class);
+                log.info("Cache hit (converted) for ticket category ID: {}", ticketCategoryId);
+                return dto;
+            } catch (Exception ignored) {
+            }
+        }
+        log.info("Cache miss for ticket category ID: {}. Fetching from Database...", ticketCategoryId);
+        InventoryDto dto = getInventoryByCategoryId(ticketCategoryId);
+        redisTemplate.opsForValue().set(cacheKey, dto, 10, TimeUnit.MINUTES);
+        return dto;
+    }
+
+    // 6. Flash Sale Waiting Room (Redis Keys: waiting_room:queue:{eventId}, waiting_room:token:{userId})
+    @Override
+    public WaitingRoomStatusDto joinWaitingRoom(Long eventId, String userId) {
+        String queueKey = WAITING_ROOM_QUEUE_PREFIX + eventId;
+        String tokenKey = WAITING_ROOM_TOKEN_PREFIX + eventId + ":" + userId;
+
+        Object token = redisTemplate.opsForValue().get(tokenKey);
+        if (token != null) {
+            return WaitingRoomStatusDto.builder()
+                    .eventId(eventId)
+                    .userId(userId)
+                    .queuePosition(0L)
+                    .totalInQueue(0L)
+                    .isAdmitted(true)
+                    .admissionToken((String) token)
+                    .build();
+        }
+
+        double score = Instant.now().toEpochMilli();
+        redisTemplate.opsForZSet().add(queueKey, userId, score);
+
+        Long rank = redisTemplate.opsForZSet().rank(queueKey, userId);
+        Long total = redisTemplate.opsForZSet().zCard(queueKey);
+
+        return WaitingRoomStatusDto.builder()
+                .eventId(eventId)
+                .userId(userId)
+                .queuePosition(rank != null ? rank + 1 : 1L)
+                .totalInQueue(total != null ? total : 1L)
+                .isAdmitted(false)
+                .admissionToken(null)
+                .build();
+    }
+
+    @Override
+    public WaitingRoomStatusDto getWaitingRoomStatus(Long eventId, String userId) {
+        String queueKey = WAITING_ROOM_QUEUE_PREFIX + eventId;
+        String tokenKey = WAITING_ROOM_TOKEN_PREFIX + eventId + ":" + userId;
+
+        Object token = redisTemplate.opsForValue().get(tokenKey);
+        if (token != null) {
+            return WaitingRoomStatusDto.builder()
+                    .eventId(eventId)
+                    .userId(userId)
+                    .queuePosition(0L)
+                    .totalInQueue(0L)
+                    .isAdmitted(true)
+                    .admissionToken((String) token)
+                    .build();
+        }
+
+        Long rank = redisTemplate.opsForZSet().rank(queueKey, userId);
+        Long total = redisTemplate.opsForZSet().zCard(queueKey);
+
+        return WaitingRoomStatusDto.builder()
+                .eventId(eventId)
+                .userId(userId)
+                .queuePosition(rank != null ? rank + 1 : -1L)
+                .totalInQueue(total != null ? total : 0L)
+                .isAdmitted(false)
+                .admissionToken(null)
+                .build();
+    }
+
+    @Override
+    public List<String> admitWaitingRoomUsers(Long eventId, int count) {
+        String queueKey = WAITING_ROOM_QUEUE_PREFIX + eventId;
+        Set<Object> users = redisTemplate.opsForZSet().range(queueKey, 0, count - 1);
+
+        if (users == null || users.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> admittedUserIds = new ArrayList<>();
+        for (Object userObj : users) {
+            String uid = (String) userObj;
+            String token = "WR_TOKEN_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            String tokenKey = WAITING_ROOM_TOKEN_PREFIX + eventId + ":" + uid;
+
+            redisTemplate.opsForValue().set(tokenKey, token, 15, TimeUnit.MINUTES);
+            redisTemplate.opsForZSet().remove(queueKey, uid);
+            admittedUserIds.add(uid);
+        }
+
+        log.info("Admitted {} users from waiting room for event ID: {}", admittedUserIds.size(), eventId);
+        return admittedUserIds;
+    }
+
+    // 7. Temporary Checkout State (Redis Key: checkout:{sessionId})
+    @Override
+    public CheckoutSessionDto initiateCheckout(CheckoutSessionDto request) {
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = "chk_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        }
+
+        Instant now = Instant.now();
+        Instant expiresAt = now.plusSeconds(900); // 15 minutes TTL
+
+        request.setSessionId(sessionId);
+        request.setCreatedAt(now);
+        request.setExpiresAt(expiresAt);
+        request.setStatus("ACTIVE");
+
+        String redisKey = CHECKOUT_KEY_PREFIX + sessionId;
+        redisTemplate.opsForValue().set(redisKey, request, 900, TimeUnit.SECONDS);
+
+        log.info("Initiated temporary checkout session ID: {} for user: {}", sessionId, request.getUserId());
+        return request;
+    }
+
+    @Override
+    public CheckoutSessionDto getCheckoutSession(String sessionId) {
+        String redisKey = CHECKOUT_KEY_PREFIX + sessionId;
+        Object obj = redisTemplate.opsForValue().get(redisKey);
+        if (obj == null) {
+            throw new ReservationNotFoundException("Checkout session expired or not found: " + sessionId);
+        }
+        if (obj instanceof CheckoutSessionDto dto) {
+            return dto;
+        }
+        try {
+            return objectMapper.convertValue(obj, CheckoutSessionDto.class);
+        } catch (Exception e) {
+            throw new ReservationNotFoundException("Failed to parse checkout session: " + sessionId);
+        }
+    }
+
+    @Override
+    public void clearCheckoutSession(String sessionId) {
+        String redisKey = CHECKOUT_KEY_PREFIX + sessionId;
+        redisTemplate.delete(redisKey);
+        log.info("Cleared checkout session ID: {}", sessionId);
+    }
+
     private TicketReservation getTicketReservation(String reservationId) {
         String redisKey = RESERVATION_KEY_PREFIX + reservationId;
         Object obj = redisTemplate.opsForValue().get(redisKey);
@@ -257,6 +482,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .reservationId(reservation.getReservationId())
                 .userId(reservation.getUserId())
                 .eventId(reservation.getEventId())
+                .eventName(reservation.getEventName())
                 .ticketCategoryId(reservation.getTicketCategoryId())
                 .categoryName(reservation.getCategoryName())
                 .quantity(reservation.getQuantity())
