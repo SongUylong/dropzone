@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    image: dropzone/eureka-server:1.4.0
+    container_name: dropzone-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    networks:
+      - dropzone-infra-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  config-server:
+    image: dropzone/config-server:1.4.0
+    container_name: dropzone-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: staging,submodule
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - dropzone-infra-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: dropzone-postgres
+    command: postgres -c wal_level=logical -c max_wal_senders=10 -c max_replication_slots=10
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dropzone
+      POSTGRES_PASSWORD: dropzone_password
+      POSTGRES_DB: dropzone
+    volumes:
+      - postgres_infra_data:/var/lib/postgresql/data
+    networks:
+      - dropzone-infra-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dropzone"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: dropzone-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_infra_data:/data
+    networks:
+      - dropzone-infra-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: dropzone-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - dropzone-infra-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: dropzone-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://192.168.56.13:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - dropzone-infra-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: dropzone-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: dropzone
+      RABBITMQ_DEFAULT_PASS: dropzone_password
+    networks:
+      - dropzone-infra-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: dropzone-keycloak
+    command: start-dev
+    ports:
+      - "8089:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    networks:
+      - dropzone-infra-net
+
+  minio:
+    image: minio/minio:RELEASE.2024-03-07T00-43-48Z
+    container_name: dropzone-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_infra_data:/data
+    networks:
+      - dropzone-infra-net
+
+networks:
+  dropzone-infra-net:
+    driver: bridge
+
+volumes:
+  postgres_infra_data:
+  redis_infra_data:
+  minio_infra_data:

@@ -151,9 +151,18 @@
         - /opt/dropzone/infra/kafka
         - /opt/dropzone/infra/rabbitmq
         - /opt/dropzone/infra/keycloak
+        - /opt/dropzone/infra/docker
 
-    - name: Create infrastructure Docker overlay network (dropzone-network)
-      docker_network:
-        name: dropzone-network
-        driver: bridge
+    - name: Copy infrastructure Docker Compose file to infra-01
+      copy:
+        src: ../docker/docker-compose-infra.yml
+        dest: /opt/dropzone/infra/docker/docker-compose.yml
+        owner: vagrant
+        group: docker
+        mode: '0644'
+
+    - name: Ensure infrastructure services are running via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/infra/docker
         state: present
+
