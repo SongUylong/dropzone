@@ -1,5 +1,6 @@
 package com.dropzone.userservice.controller;
 
+import jakarta.validation.Valid;
 import com.dropzone.userservice.dto.CreateUserRequest;
 import com.dropzone.userservice.dto.UserDto;
 import com.dropzone.userservice.service.UserService;
@@ -18,7 +19,13 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
+    public ResponseEntity<?> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Boolean paged) {
+        if (Boolean.TRUE.equals(paged)) {
+            return ResponseEntity.ok(userService.getAllUsersPaged(page, size));
+        }
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
@@ -33,7 +40,12 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody CreateUserRequest request) {
+    public ResponseEntity<UserDto> createUser(
+            @Valid @RequestBody CreateUserRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) String xUserIdHeader) {
+        if ((request.getKeycloakUserId() == null || request.getKeycloakUserId().isBlank()) && xUserIdHeader != null && !xUserIdHeader.isBlank()) {
+            request.setKeycloakUserId(xUserIdHeader);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 

@@ -2,17 +2,17 @@ package com.dropzone.notificationservice.service;
 
 import com.dropzone.notificationservice.config.RabbitMQConfig;
 import com.dropzone.notificationservice.model.JobPayload;
+import com.dropzone.notificationservice.model.JobRecord;
+import com.dropzone.notificationservice.repository.JobRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class JobService {
 
     private final RabbitTemplate rabbitTemplate;
-    private final List<JobPayload> jobHistory = Collections.synchronizedList(new ArrayList<>());
+    private final JobRecordRepository jobRecordRepository;
 
     public void dispatchJobsForOrderConfirmed(String orderNumber, String userId) {
         log.info("Kafka OrderConfirmed received -> Dispatching worker jobs to RabbitMQ for Order {}, User {}", orderNumber, userId);
@@ -68,20 +68,28 @@ public class JobService {
         log.info("Sent job to RabbitMQ queue '{}': {}", RabbitMQConfig.QUEUE_SMS, smsJob.getJobId());
     }
 
+    @Transactional
     public void recordCompletedJob(JobPayload job) {
-        job.setStatus("COMPLETED");
-        job.setProcessedAt(Instant.now());
-        jobHistory.add(job);
-        log.info("Job {} on queue '{}' COMPLETED by worker!", job.getJobId(), job.getTargetQueue());
+        JobRecord record = JobRecord.builder()
+                .jobId(job.getJobId())
+                .jobType(job.getJobType())
+                .targetQueue(job.getTargetQueue())
+                .orderNumber(job.getOrderNumber())
+                .userId(job.getUserId())
+                .details(job.getDetails())
+                .status("COMPLETED")
+                .createdAt(job.getCreatedAt())
+                .processedAt(Instant.now())
+                .build();
+        jobRecordRepository.save(record);
+        log.info("Job {} on queue '{}' COMPLETED and persisted to database!", job.getJobId(), job.getTargetQueue());
     }
 
-    public List<JobPayload> getAllJobs() {
-        return new ArrayList<>(jobHistory);
+    public List<JobRecord> getAllJobs() {
+        return jobRecordRepository.findAll();
     }
 
-    public List<JobPayload> getJobsByQueue(String queueName) {
-        return jobHistory.stream()
-                .filter(j -> j.getTargetQueue() != null && j.getTargetQueue().equalsIgnoreCase(queueName))
-                .collect(Collectors.toList());
+    public List<JobRecord> getJobsByQueue(String queueName) {
+        return jobRecordRepository.findByTargetQueueIgnoreCase(queueName);
     }
 }

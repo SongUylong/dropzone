@@ -18,6 +18,10 @@ public class JobPayload {
     private String orderNumber;
     private String userId;
     private String details;
+    private String eventName;
+    private String categoryName;
+    private String seatNumber;
+    private String eventDate;
     private String status; // PENDING, PROCESSING, COMPLETED, FAILED
     private Instant createdAt;
     private Instant processedAt;

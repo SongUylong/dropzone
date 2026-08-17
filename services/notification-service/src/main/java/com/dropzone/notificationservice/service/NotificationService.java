@@ -1,21 +1,17 @@
 package com.dropzone.notificationservice.service;
 
 import com.dropzone.notificationservice.model.NotificationRecord;
+import com.dropzone.notificationservice.repository.NotificationRecordRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,8 +20,7 @@ public class NotificationService {
 
     private final ObjectMapper objectMapper;
     private final JobService jobService;
-    private final List<NotificationRecord> notifications = Collections.synchronizedList(new ArrayList<>());
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final NotificationRecordRepository notificationRecordRepository;
 
     @KafkaListener(id = "notif-order-listener", topics = "order-events", groupId = "notification-service-jobs-group")
     public void listenOrderEvents(String message) {
@@ -42,6 +37,7 @@ public class NotificationService {
         handleEvent(message, "inventory-events");
     }
 
+    @Transactional
     public void handleEvent(String message, String topic) {
         log.info("Notification Service received Kafka event on topic '{}': {}", topic, message);
 
@@ -57,28 +53,13 @@ public class NotificationService {
             if (node.has("userId")) userId = node.get("userId").asText();
             if (node.has("amount") && !node.get("amount").isNull()) amount = node.get("amount").asDouble();
             else if (node.has("totalAmount") && !node.get("totalAmount").isNull()) amount = node.get("totalAmount").asDouble();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Failed to parse Kafka message JSON: {}", e.getMessage());
         }
 
-        String msgText;
-        if ("OrderConfirmed".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Order %s confirmed for User %s", orderNumber, userId);
-        } else if ("OrderCreated".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Order %s created for User %s", orderNumber, userId);
-        } else if ("PaymentCompleted".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Payment completed for Order %s (Amount: $%.2f)", orderNumber, amount != null ? amount : 0.0);
-        } else if ("PaymentFailed".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Payment failed for Order %s", orderNumber);
-        } else if ("InventoryReserved".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Inventory reserved for User %s", userId);
-        } else if ("InventoryReleased".equalsIgnoreCase(eventType)) {
-            msgText = String.format("Inventory released for User %s", userId);
-        } else {
-            msgText = String.format("Notification sent to User %s for Order %s: [%s]", userId, orderNumber, eventType);
-        }
+        String msgText = buildMessageText(eventType, orderNumber, userId, amount);
 
         NotificationRecord record = NotificationRecord.builder()
-                .id(idGenerator.getAndIncrement())
                 .topic(topic)
                 .eventType(eventType)
                 .orderNumber(orderNumber)
@@ -87,28 +68,36 @@ public class NotificationService {
                 .sentAt(Instant.now())
                 .build();
 
-        notifications.add(record);
-        log.info("Notification recorded: {}", msgText);
+        notificationRecordRepository.save(record);
+        log.info("Notification persisted to database: {}", msgText);
 
-        // If event is OrderConfirmed, dispatch worker jobs to RabbitMQ queues (ticket-generation.queue, email.queue, sms.queue)
+        // If event is OrderConfirmed, dispatch worker jobs to RabbitMQ queues
         if ("OrderConfirmed".equalsIgnoreCase(eventType)) {
             jobService.dispatchJobsForOrderConfirmed(orderNumber, userId);
         }
     }
 
+    private String buildMessageText(String eventType, String orderNumber, String userId, Double amount) {
+        return switch (eventType) {
+            case "OrderConfirmed" -> String.format("Order %s confirmed for User %s", orderNumber, userId);
+            case "OrderCreated" -> String.format("Order %s created for User %s", orderNumber, userId);
+            case "PaymentCompleted" -> String.format("Payment completed for Order %s (Amount: $%.2f)", orderNumber, amount != null ? amount : 0.0);
+            case "PaymentFailed" -> String.format("Payment failed for Order %s", orderNumber);
+            case "InventoryReserved" -> String.format("Inventory reserved for User %s", userId);
+            case "InventoryReleased" -> String.format("Inventory released for User %s", userId);
+            default -> String.format("Notification sent to User %s for Order %s: [%s]", userId, orderNumber, eventType);
+        };
+    }
+
     public List<NotificationRecord> getAllNotifications() {
-        return new ArrayList<>(notifications);
+        return notificationRecordRepository.findAll();
     }
 
     public List<NotificationRecord> getNotificationsByOrderNumber(String orderNumber) {
-        return notifications.stream()
-                .filter(n -> n.getOrderNumber() != null && n.getOrderNumber().equalsIgnoreCase(orderNumber))
-                .collect(Collectors.toList());
+        return notificationRecordRepository.findByOrderNumberIgnoreCase(orderNumber);
     }
 
     public List<NotificationRecord> getNotificationsByUserId(String userId) {
-        return notifications.stream()
-                .filter(n -> n.getUserId() != null && n.getUserId().equalsIgnoreCase(userId))
-                .collect(Collectors.toList());
+        return notificationRecordRepository.findByUserIdIgnoreCase(userId);
     }
 }

@@ -1,5 +1,6 @@
 package com.dropzone.orderservice.controller;
 
+import jakarta.validation.Valid;
 import com.dropzone.orderservice.dto.*;
 import com.dropzone.orderservice.model.OrderStatus;
 import com.dropzone.orderservice.model.OutboxEvent;
@@ -23,9 +24,16 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(
-            @RequestBody CreateOrderRequest request,
+            @Valid @RequestBody CreateOrderRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKeyHeader,
-            @RequestHeader(value = "X-Idempotency-Key", required = false) String xIdempotencyKeyHeader) {
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String xIdempotencyKeyHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String xUserIdHeader) {
+        if ((request.getUserId() == null || request.getUserId().isBlank()) && xUserIdHeader != null && !xUserIdHeader.isBlank()) {
+            request.setUserId(xUserIdHeader);
+        }
+        if (request.getUserId() == null || request.getUserId().isBlank()) {
+            request.setUserId("user-anonymous");
+        }
         String key = idempotencyKeyHeader != null && !idempotencyKeyHeader.isBlank() 
                 ? idempotencyKeyHeader 
                 : xIdempotencyKeyHeader;

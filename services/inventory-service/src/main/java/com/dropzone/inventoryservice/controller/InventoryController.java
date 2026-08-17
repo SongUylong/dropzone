@@ -1,5 +1,6 @@
 package com.dropzone.inventoryservice.controller;
 
+import jakarta.validation.Valid;
 import com.dropzone.inventoryservice.dto.*;
 import com.dropzone.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class InventoryController {
 
     // 1. Inventory Management
     @PostMapping
-    public ResponseEntity<InventoryDto> createOrUpdateInventory(@RequestBody CreateInventoryRequest request) {
+    public ResponseEntity<InventoryDto> createOrUpdateInventory(@Valid @RequestBody CreateInventoryRequest request) {
         InventoryDto dto = inventoryService.createOrUpdateInventory(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -37,7 +38,15 @@ public class InventoryController {
 
     // 2. Ticket Reservations & Expiration
     @PostMapping("/reserve")
-    public ResponseEntity<ReservationResponseDto> reserveTickets(@RequestBody ReserveTicketRequest request) {
+    public ResponseEntity<ReservationResponseDto> reserveTickets(
+            @Valid @RequestBody ReserveTicketRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) String xUserIdHeader) {
+        if ((request.getUserId() == null || request.getUserId().isBlank()) && xUserIdHeader != null && !xUserIdHeader.isBlank()) {
+            request.setUserId(xUserIdHeader);
+        }
+        if (request.getUserId() == null || request.getUserId().isBlank()) {
+            request.setUserId("user-anonymous");
+        }
         ReservationResponseDto dto = inventoryService.reserveTickets(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }

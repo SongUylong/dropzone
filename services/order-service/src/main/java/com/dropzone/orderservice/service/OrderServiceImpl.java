@@ -190,7 +190,8 @@ public class OrderServiceImpl implements OrderService {
         if (cached != null) {
             try {
                 return objectMapper.convertValue(cached, OrderDto.class);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to convert cached OrderDto for ID {}: {}", id, e.getMessage());
             }
         }
 
@@ -210,7 +211,8 @@ public class OrderServiceImpl implements OrderService {
         if (cached != null) {
             try {
                 return objectMapper.convertValue(cached, OrderDto.class);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to convert cached OrderDto for number {}: {}", cleanNumber, e.getMessage());
             }
         }
 

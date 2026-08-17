@@ -1,5 +1,6 @@
 package com.dropzone.paymentservice.controller;
 
+import jakarta.validation.Valid;
 import com.dropzone.paymentservice.dto.ChaosConfigDto;
 import com.dropzone.paymentservice.dto.PaymentCallbackRequest;
 import com.dropzone.paymentservice.dto.PaymentDto;
@@ -18,7 +19,12 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/process")
-    public ResponseEntity<PaymentDto> processPayment(@RequestBody ProcessPaymentRequest request) {
+    public ResponseEntity<PaymentDto> processPayment(
+            @Valid @RequestBody ProcessPaymentRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) String xUserIdHeader) {
+        if ((request.getUserId() == null || request.getUserId().isBlank()) && xUserIdHeader != null && !xUserIdHeader.isBlank()) {
+            request.setUserId(xUserIdHeader);
+        }
         PaymentDto payment = paymentService.processPayment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }

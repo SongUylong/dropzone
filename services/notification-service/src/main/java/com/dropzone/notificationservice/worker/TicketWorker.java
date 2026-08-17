@@ -53,12 +53,12 @@ public class TicketWorker {
 
             String orderNumber = job.getOrderNumber() != null ? job.getOrderNumber() : "DZ10239";
             
-            // Format Ticket ID as DZ-928231 or derived from order
+            // Format Ticket ID dynamically
             String ticketId = "DZ-" + Math.abs(orderNumber.hashCode() % 900000 + 100000);
-            String eventName = "Coldplay Concert";
-            String categoryName = "VIP";
-            String seatNumber = "Seat A102";
-            String eventDate = "October 10";
+            String eventName = (job.getEventName() != null && !job.getEventName().isBlank()) ? job.getEventName() : "Dropzone Live Concert";
+            String categoryName = (job.getCategoryName() != null && !job.getCategoryName().isBlank()) ? job.getCategoryName() : "General Admission";
+            String seatNumber = (job.getSeatNumber() != null && !job.getSeatNumber().isBlank()) ? job.getSeatNumber() : "Seat-" + (Math.abs(ticketId.hashCode()) % 500 + 1);
+            String eventDate = (job.getEventDate() != null && !job.getEventDate().isBlank()) ? job.getEventDate() : "Upcoming Event";
 
             // 1. Generate QR Code PNG
             String qrPayload = String.format("{\"ticketId\":\"%s\",\"orderNumber\":\"%s\",\"event\":\"%s\",\"seat\":\"%s\"}",

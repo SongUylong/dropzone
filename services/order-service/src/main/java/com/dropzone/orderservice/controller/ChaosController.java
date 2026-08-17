@@ -108,7 +108,9 @@ public class ChaosController {
                     return num.intValue();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Error reading redis int for field {}: {}", field, e.getMessage());
+        }
         return defaultValue;
     }
 }

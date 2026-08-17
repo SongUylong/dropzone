@@ -226,7 +226,8 @@ public class PaymentServiceImpl implements PaymentService {
         if (cached != null) {
             try {
                 return objectMapper.convertValue(cached, PaymentDto.class);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to convert cached PaymentDto for ID {}: {}", id, e.getMessage());
             }
         }
 
@@ -246,7 +247,8 @@ public class PaymentServiceImpl implements PaymentService {
         if (cached != null) {
             try {
                 return objectMapper.convertValue(cached, PaymentDto.class);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to convert cached PaymentDto for order {}: {}", cleanNum, e.getMessage());
             }
         }
 

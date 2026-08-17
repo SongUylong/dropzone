@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +31,12 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream()
                 .map(UserDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDto> getAllUsersPaged(int page, int size) {
+        return userRepository.findAll(PageRequest.of(page, size)).map(UserDto::fromEntity);
     }
 
     @Override

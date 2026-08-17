@@ -16,7 +16,13 @@ public class AuditController {
     private final AuditService auditService;
 
     @GetMapping("/logs")
-    public ResponseEntity<List<AuditRecord>> getAllAuditRecords() {
+    public ResponseEntity<?> getAllAuditRecords(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Boolean paged) {
+        if (Boolean.TRUE.equals(paged)) {
+            return ResponseEntity.ok(auditService.getAllAuditRecordsPaged(page, size));
+        }
         return ResponseEntity.ok(auditService.getAllAuditRecords());
     }
 

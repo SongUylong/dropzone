@@ -1,6 +1,6 @@
 package com.dropzone.notificationservice.controller;
 
-import com.dropzone.notificationservice.model.JobPayload;
+import com.dropzone.notificationservice.model.JobRecord;
 import com.dropzone.notificationservice.model.NotificationRecord;
 import com.dropzone.notificationservice.model.TicketRecord;
 import com.dropzone.notificationservice.service.JobService;
@@ -37,12 +37,12 @@ public class NotificationController {
     }
 
     @GetMapping("/jobs")
-    public ResponseEntity<List<JobPayload>> getAllJobs() {
+    public ResponseEntity<List<JobRecord>> getAllJobs() {
         return ResponseEntity.ok(jobService.getAllJobs());
     }
 
     @GetMapping("/jobs/queue/{queueName}")
-    public ResponseEntity<List<JobPayload>> getJobsByQueue(@PathVariable String queueName) {
+    public ResponseEntity<List<JobRecord>> getJobsByQueue(@PathVariable String queueName) {
         return ResponseEntity.ok(jobService.getJobsByQueue(queueName));
     }
 

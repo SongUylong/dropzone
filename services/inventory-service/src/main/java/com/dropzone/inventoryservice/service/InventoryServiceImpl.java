@@ -257,7 +257,8 @@ public class InventoryServiceImpl implements InventoryService {
                                 reservationId, reservation.getQuantity(), inventory.getCategoryName());
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Error releasing expired reservation ID {}: {}", reservationId, e.getMessage());
             }
 
             String redisKey = RESERVATION_KEY_PREFIX + reservationId;
@@ -335,7 +336,8 @@ public class InventoryServiceImpl implements InventoryService {
                 InventoryDto dto = objectMapper.convertValue(cached, InventoryDto.class);
                 log.info("Cache hit (converted) for ticket category ID: {}", ticketCategoryId);
                 return dto;
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Error converting cached inventory for category ID {}: {}", ticketCategoryId, e.getMessage());
             }
         }
         log.info("Cache miss for ticket category ID: {}. Fetching from Database...", ticketCategoryId);
@@ -552,10 +554,46 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public FlashSaleSummaryDto simulateFlashSale(int totalUsers, int totalTickets) {
-        int successfulReservations = Math.min(totalUsers, totalTickets);
-        int successfulOrders = successfulReservations;
-        int rejected = Math.max(0, totalUsers - totalTickets);
-        int oversold = 0;
+        java.util.concurrent.atomic.AtomicInteger successfulReservations = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.concurrent.atomic.AtomicInteger rejected = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        String flashSaleStockKey = "flash_sale_stock_sim:" + UUID.randomUUID().toString();
+        redisTemplate.opsForValue().set(flashSaleStockKey, totalTickets, 60, TimeUnit.SECONDS);
+
+        int numThreads = Math.min(totalUsers, 50);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(numThreads);
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalUsers);
+
+        for (int i = 0; i < totalUsers; i++) {
+            executor.submit(() -> {
+                try {
+                    Long remaining = redisTemplate.opsForValue().decrement(flashSaleStockKey);
+                    if (remaining != null && remaining >= 0) {
+                        successfulReservations.incrementAndGet();
+                    } else {
+                        rejected.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    rejected.incrementAndGet();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            executor.shutdownNow();
+            redisTemplate.delete(flashSaleStockKey);
+        }
+
+        int succRes = successfulReservations.get();
+        int succOrd = succRes;
+        int rej = rejected.get();
+        int oversold = Math.max(0, succRes - totalTickets);
         int negativeInventory = 0;
         int duplicateOrders = 0;
         int duplicatePayments = 0;
@@ -564,9 +602,9 @@ public class InventoryServiceImpl implements InventoryService {
                 "FLASH SALE TEST\n\n\nUsers:\n%,d\n\n\nTickets:\n%,d\n\n\nSuccessful reservations:\n%,d\n\n\nSuccessful orders:\n%,d\n\n\nRejected:\n%,d\n\n\nOversold:\n%d\n\n\nNegative inventory:\n%d\n\n\nDuplicate orders:\n%d\n\n\nDuplicate payments:\n%d",
                 totalUsers,
                 totalTickets,
-                successfulReservations,
-                successfulOrders,
-                rejected,
+                succRes,
+                succOrd,
+                rej,
                 oversold,
                 negativeInventory,
                 duplicateOrders,
@@ -576,9 +614,9 @@ public class InventoryServiceImpl implements InventoryService {
         return FlashSaleSummaryDto.builder()
                 .users(totalUsers)
                 .tickets(totalTickets)
-                .successfulReservations(successfulReservations)
-                .successfulOrders(successfulOrders)
-                .rejected(rejected)
+                .successfulReservations(succRes)
+                .successfulOrders(succOrd)
+                .rejected(rej)
                 .oversold(oversold)
                 .negativeInventory(negativeInventory)
                 .duplicateOrders(duplicateOrders)
