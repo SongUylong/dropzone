@@ -282,7 +282,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
         saved.setStatus(OrderStatus.CONFIRMED);
-        saved = orderRepository.save(saved);
+        saved = orderRepository.saveAndFlush(saved);
 
         // Create OrderConfirmed Event
         OrderEvent confirmedEvent = OrderEvent.builder()
