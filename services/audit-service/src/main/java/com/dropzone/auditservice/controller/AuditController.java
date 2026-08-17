@@ -29,4 +29,14 @@ public class AuditController {
     public ResponseEntity<List<AuditRecord>> getAuditRecordsByOrderNumber(@PathVariable String orderNumber) {
         return ResponseEntity.ok(auditService.getAuditRecordsByOrderNumber(orderNumber));
     }
+
+    @GetMapping("/formatted")
+    public ResponseEntity<String> getFormattedAuditLog() {
+        return ResponseEntity.ok(auditService.getFormattedAuditLog());
+    }
+
+    @GetMapping("/log")
+    public ResponseEntity<String> getAuditLogText() {
+        return ResponseEntity.ok(auditService.getFormattedAuditLog());
+    }
 }

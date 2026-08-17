@@ -2,6 +2,8 @@ package com.dropzone.userservice.service;
 
 import com.dropzone.userservice.dto.CreateUserRequest;
 import com.dropzone.userservice.dto.UserDto;
+import com.dropzone.userservice.event.UserEvent;
+import com.dropzone.userservice.event.UserEventProducer;
 import com.dropzone.userservice.model.User;
 import com.dropzone.userservice.model.UserStatus;
 import com.dropzone.userservice.repository.UserRepository;
@@ -9,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserEventProducer userEventProducer;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,6 +58,16 @@ public class UserServiceImpl implements UserService {
                 .purchaseHistoryRef(request.getPurchaseHistoryRef())
                 .build();
         User savedUser = userRepository.save(user);
+
+        userEventProducer.sendUserEvent(UserEvent.builder()
+                .eventType("UserRegistered")
+                .userId(savedUser.getId())
+                .keycloakUserId(savedUser.getKeycloakUserId())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .timestamp(Instant.now())
+                .build());
+
         return UserDto.fromEntity(savedUser);
     }
 

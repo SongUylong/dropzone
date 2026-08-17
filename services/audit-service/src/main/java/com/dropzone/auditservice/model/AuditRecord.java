@@ -18,5 +18,6 @@ public class AuditRecord {
     private String orderNumber;
     private String userId;
     private String payload;
+    private String formattedMessage;
     private Instant receivedAt;
 }

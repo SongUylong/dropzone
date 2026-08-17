@@ -1,6 +1,8 @@
 package com.dropzone.eventservice.service;
 
 import com.dropzone.eventservice.dto.*;
+import com.dropzone.eventservice.event.EventEvent;
+import com.dropzone.eventservice.event.EventEventProducer;
 import com.dropzone.eventservice.model.Event;
 import com.dropzone.eventservice.model.EventImage;
 import com.dropzone.eventservice.model.EventStatus;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,7 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final MinioStorageService minioStorageService;
+    private final EventEventProducer eventEventProducer;
 
     @Override
     @Transactional
@@ -59,6 +63,21 @@ public class EventServiceImpl implements EventService {
         }
 
         Event savedEvent = eventRepository.save(event);
+
+        eventEventProducer.sendEventEvent(EventEvent.builder()
+                .eventType("EventCreated")
+                .id(savedEvent.getId())
+                .title(savedEvent.getTitle())
+                .name(savedEvent.getTitle())
+                .description(savedEvent.getDescription())
+                .venue(savedEvent.getVenue())
+                .location(savedEvent.getVenue())
+                .date(savedEvent.getEventDate() != null ? savedEvent.getEventDate().toString() : "October 10")
+                .eventDate(savedEvent.getEventDate() != null ? savedEvent.getEventDate().toString() : "October 10")
+                .status(savedEvent.getStatus() != null ? savedEvent.getStatus().name() : "PUBLISHED")
+                .timestamp(Instant.now())
+                .build());
+
         return mapToDto(savedEvent);
     }
 
@@ -116,6 +135,21 @@ public class EventServiceImpl implements EventService {
         }
 
         Event updatedEvent = eventRepository.save(event);
+
+        eventEventProducer.sendEventEvent(EventEvent.builder()
+                .eventType("EventUpdated")
+                .id(updatedEvent.getId())
+                .title(updatedEvent.getTitle())
+                .name(updatedEvent.getTitle())
+                .description(updatedEvent.getDescription())
+                .venue(updatedEvent.getVenue())
+                .location(updatedEvent.getVenue())
+                .date(updatedEvent.getEventDate() != null ? updatedEvent.getEventDate().toString() : "October 10")
+                .eventDate(updatedEvent.getEventDate() != null ? updatedEvent.getEventDate().toString() : "October 10")
+                .status(updatedEvent.getStatus() != null ? updatedEvent.getStatus().name() : "PUBLISHED")
+                .timestamp(Instant.now())
+                .build());
+
         return mapToDto(updatedEvent);
     }
 
