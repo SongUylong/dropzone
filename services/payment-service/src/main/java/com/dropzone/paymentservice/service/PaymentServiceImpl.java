@@ -76,6 +76,13 @@ public class PaymentServiceImpl implements PaymentService {
             orderNumber = "DZ" + System.currentTimeMillis();
         }
         String cleanOrderNumber = orderNumber.startsWith("#") ? orderNumber.substring(1) : orderNumber;
+        
+        Optional<Payment> existingOpt = paymentRepository.findByOrderNumber(cleanOrderNumber);
+        if (existingOpt.isPresent()) {
+            log.info("Payment already exists for OrderNumber {}, returning existing payment {}", cleanOrderNumber, existingOpt.get().getPaymentId());
+            return mapToDto(existingOpt.get());
+        }
+
         String userId = (request.getUserId() != null && !request.getUserId().isBlank()) ? request.getUserId() : "123";
         BigDecimal amount = request.getAmount() != null ? request.getAmount() : BigDecimal.valueOf(600.00);
         PaymentMode mode = request.getMode() != null ? request.getMode() : PaymentMode.SUCCESS;
