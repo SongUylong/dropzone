@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 public class ProcessPaymentRequest {
 
     private String orderNumber;
+    private String userId;
     private BigDecimal amount;
     private PaymentMode mode; // Optional: SUCCESS, FAILED, SLOW, TIMEOUT, DUPLICATE_CALLBACK, SERVICE_UNAVAILABLE
     private String customFailureReason;

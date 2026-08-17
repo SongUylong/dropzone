@@ -3,6 +3,8 @@ package com.dropzone.paymentservice.service;
 import com.dropzone.paymentservice.dto.PaymentCallbackRequest;
 import com.dropzone.paymentservice.dto.PaymentDto;
 import com.dropzone.paymentservice.dto.ProcessPaymentRequest;
+import com.dropzone.paymentservice.event.PaymentEvent;
+import com.dropzone.paymentservice.event.PaymentEventProducer;
 import com.dropzone.paymentservice.exception.PaymentNotFoundException;
 import com.dropzone.paymentservice.model.Payment;
 import com.dropzone.paymentservice.model.PaymentMode;
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final MockPayProvider mockPayProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final PaymentEventProducer paymentEventProducer;
 
     private static final String CACHE_KEY_PREFIX = "cache:payment:";
     private static final String CACHE_KEY_ORDER_PREFIX = "cache:payment:order:";
@@ -44,12 +47,25 @@ public class PaymentServiceImpl implements PaymentService {
             orderNumber = "DZ" + System.currentTimeMillis();
         }
         String cleanOrderNumber = orderNumber.startsWith("#") ? orderNumber.substring(1) : orderNumber;
+        String userId = (request.getUserId() != null && !request.getUserId().isBlank()) ? request.getUserId() : "123";
         BigDecimal amount = request.getAmount() != null ? request.getAmount() : BigDecimal.valueOf(600.00);
         PaymentMode mode = request.getMode() != null ? request.getMode() : PaymentMode.SUCCESS;
 
         String paymentId = "PAY_" + cleanOrderNumber + "_" + System.currentTimeMillis() % 10000;
 
-        log.info("Processing Payment {} for Order {} with Amount ${} [Mode: {}]", paymentId, cleanOrderNumber, amount, mode);
+        log.info("Processing Payment {} for Order {} User {} with Amount ${} [Mode: {}]", paymentId, cleanOrderNumber, userId, amount, mode);
+
+        // Produce PaymentStarted Kafka Event
+        paymentEventProducer.sendPaymentEvent(PaymentEvent.builder()
+                .eventType("PaymentStarted")
+                .paymentId(paymentId)
+                .orderNumber(cleanOrderNumber)
+                .userId(userId)
+                .amount(amount)
+                .currency("USD")
+                .status("PENDING")
+                .timestamp(Instant.now())
+                .build());
 
         MockPayResponse response = mockPayProvider.processPayment(cleanOrderNumber, amount, mode, request.getCustomFailureReason());
 
@@ -66,6 +82,20 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment saved = paymentRepository.save(payment);
         log.info("Payment saved with ID {}, Status: {}", saved.getPaymentId(), saved.getStatus());
+
+        String eventType = (saved.getStatus() == PaymentStatus.SUCCESS) ? "PaymentCompleted" : "PaymentFailed";
+        paymentEventProducer.sendPaymentEvent(PaymentEvent.builder()
+                .eventType(eventType)
+                .paymentId(saved.getPaymentId())
+                .orderNumber(cleanOrderNumber)
+                .userId(userId)
+                .amount(amount)
+                .currency("USD")
+                .status(saved.getStatus().name())
+                .failureReason(saved.getFailureReason())
+                .transactionId(saved.getTransactionId())
+                .timestamp(Instant.now())
+                .build());
 
         PaymentDto dto = mapToDto(saved);
         cachePayment(dto);
@@ -105,6 +135,21 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         Payment updated = paymentRepository.save(payment);
+
+        String eventType = (updated.getStatus() == PaymentStatus.SUCCESS) ? "PaymentCompleted" : "PaymentFailed";
+        paymentEventProducer.sendPaymentEvent(PaymentEvent.builder()
+                .eventType(eventType)
+                .paymentId(updated.getPaymentId())
+                .orderNumber(updated.getOrderNumber())
+                .userId("123")
+                .amount(updated.getAmount())
+                .currency(updated.getCurrency())
+                .status(updated.getStatus().name())
+                .failureReason(updated.getFailureReason())
+                .transactionId(updated.getTransactionId())
+                .timestamp(Instant.now())
+                .build());
+
         PaymentDto dto = mapToDto(updated);
         cachePayment(dto);
         return dto;

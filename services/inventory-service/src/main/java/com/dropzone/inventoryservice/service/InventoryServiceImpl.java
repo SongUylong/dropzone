@@ -1,6 +1,8 @@
 package com.dropzone.inventoryservice.service;
 
 import com.dropzone.inventoryservice.dto.*;
+import com.dropzone.inventoryservice.event.InventoryEvent;
+import com.dropzone.inventoryservice.event.InventoryEventProducer;
 import com.dropzone.inventoryservice.exception.InsufficientInventoryException;
 import com.dropzone.inventoryservice.exception.InventoryNotFoundException;
 import com.dropzone.inventoryservice.exception.ReservationNotFoundException;
@@ -32,6 +34,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final InventoryEventProducer inventoryEventProducer;
 
     @Value("${inventory.reservation-ttl-seconds:600}")
     private long reservationTtlSeconds;
@@ -132,6 +135,16 @@ public class InventoryServiceImpl implements InventoryService {
         // Track in ZSet for expiration processing
         redisTemplate.opsForZSet().add(ACTIVE_RESERVATIONS_INDEX, reservationId, expiresAt.getEpochSecond());
 
+        // Emit InventoryReserved Event
+        inventoryEventProducer.sendInventoryEvent(InventoryEvent.builder()
+                .eventType("InventoryReserved")
+                .reservationId(reservationId)
+                .ticketCategoryId(request.getTicketCategoryId())
+                .quantity(request.getQuantity())
+                .userId(request.getUserId())
+                .timestamp(Instant.now())
+                .build());
+
         log.info("Reserved {} tickets for category {}. Reservation ID: {}, Expires at: {}",
                 request.getQuantity(), inventory.getCategoryName(), reservationId, expiresAt);
 
@@ -192,6 +205,16 @@ public class InventoryServiceImpl implements InventoryService {
         redisTemplate.delete(redisKey);
         redisTemplate.opsForZSet().remove(ACTIVE_RESERVATIONS_INDEX, reservationId);
 
+        // Emit InventoryReleased Event
+        inventoryEventProducer.sendInventoryEvent(InventoryEvent.builder()
+                .eventType("InventoryReleased")
+                .reservationId(reservationId)
+                .ticketCategoryId(reservation.getTicketCategoryId())
+                .quantity(reservation.getQuantity())
+                .userId(reservation.getUserId())
+                .timestamp(Instant.now())
+                .build());
+
         log.info("Cancelled reservation ID: {}. Released {} tickets back to category {}",
                 reservationId, reservation.getQuantity(), inventory.getCategoryName());
 
@@ -220,6 +243,16 @@ public class InventoryServiceImpl implements InventoryService {
                         inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - reservation.getQuantity()));
                         inventory.setAvailableQuantity(inventory.getAvailableQuantity() + reservation.getQuantity());
                         inventoryRepository.save(inventory);
+
+                        inventoryEventProducer.sendInventoryEvent(InventoryEvent.builder()
+                                .eventType("InventoryReleased")
+                                .reservationId(reservationId)
+                                .ticketCategoryId(reservation.getTicketCategoryId())
+                                .quantity(reservation.getQuantity())
+                                .userId(reservation.getUserId())
+                                .timestamp(Instant.now())
+                                .build());
+
                         log.info("Expired reservation ID: {} released {} tickets back to category {}",
                                 reservationId, reservation.getQuantity(), inventory.getCategoryName());
                     }

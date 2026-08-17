@@ -3,7 +3,11 @@ server:
 
 spring:
   application:
-    name: NOTIFICATION-SERVICE
+    name: notification-service
+  profiles:
+    active: development
+  config:
+    import: "configserver:http://localhost:8888"
 
 eureka:
   instance:

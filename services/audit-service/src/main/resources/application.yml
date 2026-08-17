@@ -3,7 +3,11 @@ server:
 
 spring:
   application:
-    name: AUDIT-SERVICE
+    name: audit-service
+  profiles:
+    active: development
+  config:
+    import: "configserver:http://localhost:8888"
 
 eureka:
   instance:

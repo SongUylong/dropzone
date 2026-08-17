@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @Builder
 public class ProcessPaymentRequestDto {
     private String orderNumber;
+    private String userId;
     private BigDecimal amount;
     private String mode; // e.g. SUCCESS, FAILED, SLOW, TIMEOUT, SERVICE_UNAVAILABLE
     private String customFailureReason;

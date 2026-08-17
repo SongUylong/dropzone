@@ -2,6 +2,8 @@ package com.dropzone.orderservice.service;
 
 import com.dropzone.orderservice.client.PaymentClient;
 import com.dropzone.orderservice.dto.*;
+import com.dropzone.orderservice.event.OrderEvent;
+import com.dropzone.orderservice.event.OrderEventProducer;
 import com.dropzone.orderservice.exception.InvalidOrderStateException;
 import com.dropzone.orderservice.exception.OrderNotFoundException;
 import com.dropzone.orderservice.model.Order;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -33,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private final ObjectMapper objectMapper;
     private final PaymentClient paymentClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
+    private final OrderEventProducer orderEventProducer;
 
     private static final String CACHE_KEY_PREFIX = "cache:order:";
     private static final String CACHE_KEY_NUM_PREFIX = "cache:order:number:";
@@ -124,6 +128,18 @@ public class OrderServiceImpl implements OrderService {
         try {
             saved = orderRepository.save(order);
             log.info("Order created in PENDING state with orderNumber: {}", saved.getOrderNumber());
+
+            // Emit OrderCreated Event
+            orderEventProducer.sendOrderEvent(OrderEvent.builder()
+                    .eventType("OrderCreated")
+                    .orderId(saved.getId())
+                    .orderNumber(saved.getOrderNumber())
+                    .userId(saved.getUserId())
+                    .eventId(saved.getEventId())
+                    .totalAmount(saved.getTotalAmount())
+                    .status("PENDING")
+                    .timestamp(Instant.now())
+                    .build());
 
             // PENDING -> RESERVED
             saved.setStatus(OrderStatus.RESERVED);
@@ -261,6 +277,18 @@ public class OrderServiceImpl implements OrderService {
         saved.setStatus(OrderStatus.CONFIRMED);
         saved = orderRepository.save(saved);
 
+        // Emit OrderConfirmed Kafka Event
+        orderEventProducer.sendOrderEvent(OrderEvent.builder()
+                .eventType("OrderConfirmed")
+                .orderId(saved.getId())
+                .orderNumber(saved.getOrderNumber())
+                .userId(saved.getUserId())
+                .eventId(saved.getEventId())
+                .totalAmount(saved.getTotalAmount())
+                .status("CONFIRMED")
+                .timestamp(Instant.now())
+                .build());
+
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
         return dto;
@@ -276,6 +304,18 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CONFIRMED);
 
         Order saved = orderRepository.save(order);
+
+        orderEventProducer.sendOrderEvent(OrderEvent.builder()
+                .eventType("OrderConfirmed")
+                .orderId(saved.getId())
+                .orderNumber(saved.getOrderNumber())
+                .userId(saved.getUserId())
+                .eventId(saved.getEventId())
+                .totalAmount(saved.getTotalAmount())
+                .status("CONFIRMED")
+                .timestamp(Instant.now())
+                .build());
+
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
         return dto;
@@ -325,6 +365,9 @@ public class OrderServiceImpl implements OrderService {
         }
         if (paymentRequest.getAmount() == null) {
             paymentRequest.setAmount(order.getTotalAmount());
+        }
+        if (paymentRequest.getUserId() == null || paymentRequest.getUserId().isBlank()) {
+            paymentRequest.setUserId(order.getUserId());
         }
 
         log.info("OrderService calling PaymentClient for orderId: {}, orderNumber: {}", orderId, order.getOrderNumber());
