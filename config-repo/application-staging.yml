@@ -1,0 +1,35 @@
+# Dropzone Staging Profile Shared Infrastructure Configuration
+spring:
+  config:
+    activate:
+      on-profile: staging
+  eureka:
+    client:
+      service-url:
+        defaultZone: ${EUREKA_SERVER_URL:http://infra-01:8761/eureka/}
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:infra-01}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dropzone}?currentSchema=${POSTGRES_SCHEMA:public}
+    username: ${POSTGRES_USER:dropzone}
+    password: ${POSTGRES_PASSWORD:dropzone_password}
+  data:
+    redis:
+      host: ${REDIS_HOST:infra-01}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:infra-01:9092}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:infra-01}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:dropzone}
+    password: ${RABBITMQ_PASSWORD:dropzone_password}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://infra-01:8089/realms/dropzone}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://infra-01:8089/realms/dropzone/protocol/openid-connect/certs}
+
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://infra-01:4318/v1/traces}

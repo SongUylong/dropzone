@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:infra-01:9092}
+
+server:
+  port: 8090

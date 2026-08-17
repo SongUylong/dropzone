@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:infra-01}:5432/dropzone
+    username: dropzone
+    password: ${POSTGRES_PASSWORD:dropzone_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:infra-01:9092}

@@ -1,0 +1,24 @@
+minio:
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  url: ${MINIO_URL:http://infra-01:9000}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:infra-01}:5432/dropzone
+    username: dropzone
+    password: ${POSTGRES_PASSWORD:dropzone_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:infra-01:9092}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:infra-01}
+    port: 5672
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:dropzone_password}

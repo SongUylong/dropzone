@@ -1,0 +1,8 @@
+target/
+*.log
+.env
+.env.*
+*.pem
+*.key
+secrets.*
+

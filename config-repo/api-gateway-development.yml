@@ -1,0 +1,93 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8089/realms/dropzone}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service-api
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users, /api/users/**
+          filters:
+            - RewritePath=/api/users(?<segment>.*), /users$\{segment}
+
+        - id: user-service-direct
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users, /users/**
+
+        - id: event-service-api
+          uri: lb://EVENT-SERVICE
+          predicates:
+            - Path=/api/events, /api/events/**
+          filters:
+            - RewritePath=/api/events(?<segment>.*), /events$\{segment}
+
+        - id: inventory-service-api
+          uri: lb://INVENTORY-SERVICE
+          predicates:
+            - Path=/api/inventory, /api/inventory/**
+          filters:
+            - RewritePath=/api/inventory(?<segment>.*), /inventory$\{segment}
+
+        - id: order-service-api
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/orders, /api/orders/**
+          filters:
+            - RewritePath=/api/orders(?<segment>.*), /orders$\{segment}
+
+        - id: payment-service-api
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments, /api/payments/**
+          filters:
+            - RewritePath=/api/payments(?<segment>.*), /payments$\{segment}
+
+        - id: audit-service-api
+          uri: lb://AUDIT-SERVICE
+          predicates:
+            - Path=/api/audit, /api/audit/**
+          filters:
+            - RewritePath=/api/audit(?<segment>.*), /audit$\{segment}
+
+        - id: notification-service-api
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications, /api/notifications/**
+          filters:
+            - RewritePath=/api/notifications(?<segment>.*), /notifications$\{segment}
+
+        - id: search-service-api
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/api/search, /api/search/**
+          filters:
+            - RewritePath=/api/search(?<segment>.*), /search$\{segment}
+
+        - id: search-service-direct
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/search, /search/**
+
+        - id: chaos-lab-api
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/chaos, /api/chaos/**, /chaos, /chaos/**, /test-report, /api/test-report, /testing/report, /ci-pipeline, /api/ci-pipeline, /ci/**
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

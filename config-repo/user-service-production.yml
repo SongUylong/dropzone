@@ -1,0 +1,4 @@
+database: dropzone_user_prod
+redis: redis-prod
+eureka: eureka-server
+logging: ERROR
