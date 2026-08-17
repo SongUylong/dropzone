@@ -1,18 +1,181 @@
 version: '3.8'
 
 services:
-  eureka-server:
-    build:
-      context: ./services/eureka-server
-      dockerfile: Dockerfile
-    container_name: dropzone-eureka-server
+  postgres:
+    image: postgres:16-alpine
+    container_name: dropzone-postgres
     ports:
-      - "8761:8761"
+      - "5432:5432"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      POSTGRES_USER: dropzone
+      POSTGRES_PASSWORD: dropzone_password
+      POSTGRES_DB: dropzone
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dropzone-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dropzone"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: dropzone-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dropzone-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: dropzone-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - dropzone-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: dropzone-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - dropzone-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: dropzone-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - dropzone-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: dropzone-keycloak
+    command: start-dev
+    ports:
+      - "8089:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    networks:
+      - dropzone-net
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: dropzone-opensearch
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - DISABLE_SECURITY_PLUGIN=true
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    networks:
+      - dropzone-net
+
+  minio:
+    image: minio/minio:RELEASE.2024-03-07T00-43-48Z
+    container_name: dropzone-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    networks:
+      - dropzone-net
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: dropzone-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - dropzone-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: dropzone-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - dropzone-net
+
+  loki:
+    image: grafana/loki:2.9.5
+    container_name: dropzone-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./infrastructure/monitoring/loki.yml:/etc/loki/local-config.yaml
+    networks:
+      - dropzone-net
+
+  tempo:
+    image: grafana/tempo:2.4.0
+    container_name: dropzone-tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./infrastructure/monitoring/tempo.yml:/etc/tempo/tempo.yaml
     networks:
       - dropzone-net
 
 networks:
   dropzone-net:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  opensearch_data:
+  minio_data:
+  grafana_data:
