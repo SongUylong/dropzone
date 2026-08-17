@@ -36,17 +36,17 @@ jobs:
       - name: 4. Unit tests
         run: |
           echo "Running unit tests across services..."
-          ./mvnw test
+          ./mvnw test -Dspring.cloud.config.enabled=false -Dspring.cloud.discovery.enabled=false
 
       - name: 5. Integration tests (Testcontainers)
         run: |
           echo "Running integration tests with Testcontainers..."
-          ./mvnw verify -DskipUnitTests=false
+          ./mvnw verify -DskipUnitTests=false -Dspring.cloud.config.enabled=false -Dspring.cloud.discovery.enabled=false
 
       - name: 6. Contract tests (Pact)
         run: |
           echo "Running Pact contract tests..."
-          ./mvnw test -Dtest=*ContractTest
+          ./mvnw test -Dtest=*ContractTest -Dspring.cloud.config.enabled=false -Dspring.cloud.discovery.enabled=false
 
       - name: 7. Static analysis (SonarQube)
         env:
