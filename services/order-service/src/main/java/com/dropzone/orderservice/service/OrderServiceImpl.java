@@ -37,6 +37,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentClient paymentClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final OrderEventProducer orderEventProducer;
+    private final OutboxService outboxService;
 
     private static final String CACHE_KEY_PREFIX = "cache:order:";
     private static final String CACHE_KEY_NUM_PREFIX = "cache:order:number:";
@@ -129,8 +130,8 @@ public class OrderServiceImpl implements OrderService {
             saved = orderRepository.save(order);
             log.info("Order created in PENDING state with orderNumber: {}", saved.getOrderNumber());
 
-            // Emit OrderCreated Event
-            orderEventProducer.sendOrderEvent(OrderEvent.builder()
+            // Create OrderCreated Event
+            OrderEvent createdEvent = OrderEvent.builder()
                     .eventType("OrderCreated")
                     .orderId(saved.getId())
                     .orderNumber(saved.getOrderNumber())
@@ -139,7 +140,13 @@ public class OrderServiceImpl implements OrderService {
                     .totalAmount(saved.getTotalAmount())
                     .status("PENDING")
                     .timestamp(Instant.now())
-                    .build());
+                    .build();
+
+            // Save Outbox Event (Order + Outbox Event saved in ONE database transaction)
+            outboxService.saveOutboxEvent("Order", saved.getOrderNumber(), "OrderCreated", createdEvent);
+
+            // Direct Kafka publish (fallback / immediate)
+            orderEventProducer.sendOrderEvent(createdEvent);
 
             // PENDING -> RESERVED
             saved.setStatus(OrderStatus.RESERVED);
@@ -277,8 +284,8 @@ public class OrderServiceImpl implements OrderService {
         saved.setStatus(OrderStatus.CONFIRMED);
         saved = orderRepository.save(saved);
 
-        // Emit OrderConfirmed Kafka Event
-        orderEventProducer.sendOrderEvent(OrderEvent.builder()
+        // Create OrderConfirmed Event
+        OrderEvent confirmedEvent = OrderEvent.builder()
                 .eventType("OrderConfirmed")
                 .orderId(saved.getId())
                 .orderNumber(saved.getOrderNumber())
@@ -287,7 +294,13 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(saved.getTotalAmount())
                 .status("CONFIRMED")
                 .timestamp(Instant.now())
-                .build());
+                .build();
+
+        // Save Outbox Event (Order + Outbox Event in ONE database transaction)
+        outboxService.saveOutboxEvent("Order", saved.getOrderNumber(), "OrderConfirmed", confirmedEvent);
+
+        // Direct Kafka publish
+        orderEventProducer.sendOrderEvent(confirmedEvent);
 
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
@@ -305,7 +318,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        orderEventProducer.sendOrderEvent(OrderEvent.builder()
+        OrderEvent confirmedEvent = OrderEvent.builder()
                 .eventType("OrderConfirmed")
                 .orderId(saved.getId())
                 .orderNumber(saved.getOrderNumber())
@@ -314,7 +327,10 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(saved.getTotalAmount())
                 .status("CONFIRMED")
                 .timestamp(Instant.now())
-                .build());
+                .build();
+
+        outboxService.saveOutboxEvent("Order", saved.getOrderNumber(), "OrderConfirmed", confirmedEvent);
+        orderEventProducer.sendOrderEvent(confirmedEvent);
 
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);

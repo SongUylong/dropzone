@@ -25,4 +25,13 @@ public class OrderEventProducer {
             log.error("Failed to produce Kafka order event for order {}: {}", event.getOrderNumber(), e.getMessage(), e);
         }
     }
+
+    public void sendRawOrderEvent(String jsonPayload) {
+        try {
+            log.info("Producing Outbox Kafka event payload to topic '{}': {}", TOPIC_ORDER_EVENTS, jsonPayload);
+            kafkaTemplate.send(TOPIC_ORDER_EVENTS, jsonPayload);
+        } catch (Exception e) {
+            log.error("Failed to produce raw Kafka order event: {}", e.getMessage(), e);
+        }
+    }
 }

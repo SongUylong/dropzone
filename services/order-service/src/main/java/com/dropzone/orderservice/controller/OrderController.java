@@ -2,7 +2,9 @@ package com.dropzone.orderservice.controller;
 
 import com.dropzone.orderservice.dto.*;
 import com.dropzone.orderservice.model.OrderStatus;
+import com.dropzone.orderservice.model.OutboxEvent;
 import com.dropzone.orderservice.service.OrderService;
+import com.dropzone.orderservice.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +19,7 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OutboxService outboxService;
 
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(
@@ -104,5 +107,10 @@ public class OrderController {
     public ResponseEntity<String> resetCircuitBreaker() {
         orderService.resetCircuitBreaker();
         return ResponseEntity.ok("Circuit breaker reset to CLOSED");
+    }
+
+    @GetMapping("/outbox")
+    public ResponseEntity<List<OutboxEvent>> getOutboxEvents() {
+        return ResponseEntity.ok(outboxService.getAllOutboxEvents());
     }
 }
