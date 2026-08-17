@@ -1,0 +1,40 @@
+---
+# Step 19 — Microservice Rolling Upgrade Playbook (e.g. dropzone/order-service:1.0.0 -> 1.1.0)
+
+- name: Perform Rolling Service Image Upgrade
+  hosts: app-02
+  become: true
+  vars:
+    service_name: "order-service"
+    previous_tag: "1.0.0"
+    current_tag: "1.1.0"
+  tasks:
+    - name: Record deployment start timestamp
+      command: date -u +"%Y-%m-%dT%H:%M:%SZ"
+      register: deploy_time
+
+    - name: Update Order Service Image Tag in app-02 Docker Compose Stack
+      replace:
+        path: /opt/dropzone/apps/app2/docker-compose.yml
+        regexp: 'image: dropzone/order-service:.*'
+        replace: 'image: dropzone/order-service:{{ current_tag }}'
+
+    - name: Apply Zero-Downtime Container Replacement via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/apps/app2
+        state: present
+
+    - name: Verify Health Check of Upgraded Microservice Instance
+      uri:
+        url: "http://localhost:8083/actuator/health"
+        status_code: 200
+      register: service_health
+      until: service_health.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Display Upgrade Verification Summary
+      debug:
+        msg: >
+          ORDER-SERVICE ROLLING UPGRADE SUCCESSFUL:
+          Previous Tag: {{ previous_tag }} | Current Tag: {{ current_tag }} | Health Status: {{ service_health.json.status }}
