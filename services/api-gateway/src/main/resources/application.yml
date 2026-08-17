@@ -3,13 +3,11 @@ server:
 
 spring:
   application:
-    name: API-GATEWAY
-  cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+    name: api-gateway
+  profiles:
+    active: development
+  config:
+    import: "optional:configserver:http://localhost:8888"
 
 eureka:
   instance:

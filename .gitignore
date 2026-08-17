@@ -2,3 +2,7 @@ target/
 *.log
 .mvn/wrapper/maven-wrapper.jar
 .pi/
+.classpath
+.project
+.settings/
+.factorypath
