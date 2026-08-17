@@ -1,14 +1,14 @@
 package com.dropzone.eventservice.controller;
 
-import com.dropzone.eventservice.dto.CreateEventRequest;
-import com.dropzone.eventservice.dto.EventDto;
-import com.dropzone.eventservice.dto.UpdateEventRequest;
+import com.dropzone.eventservice.dto.*;
 import com.dropzone.eventservice.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -47,5 +47,21 @@ public class EventController {
     public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EventImageDto> uploadEventImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        EventImageDto imageDto = eventService.uploadEventImage(id, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(imageDto);
+    }
+
+    @PostMapping(value = "/storage/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FileUploadResponse> uploadFileToMinio(
+            @RequestParam(value = "category", required = false, defaultValue = "uploads") String category,
+            @RequestParam("file") MultipartFile file) {
+        FileUploadResponse response = eventService.uploadFileToMinio(category, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

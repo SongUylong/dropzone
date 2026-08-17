@@ -9,6 +9,7 @@ import com.dropzone.eventservice.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final MinioStorageService minioStorageService;
 
     @Override
     @Transactional
@@ -140,6 +142,52 @@ public class EventServiceImpl implements EventService {
             throw new RuntimeException("Event not found with id: " + id);
         }
         eventRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public EventImageDto uploadEventImage(Long eventId, MultipartFile file) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+
+        // Upload to MinIO event-images bucket
+        String imageUrl = minioStorageService.uploadMultipartFile(minioStorageService.getEventImagesBucket(), file);
+
+        // Save ONLY metadata in PostgreSQL
+        int displayOrder = event.getImages().size();
+        EventImage eventImage = EventImage.builder()
+                .imageUrl(imageUrl)
+                .displayOrder(displayOrder)
+                .build();
+
+        event.addImage(eventImage);
+        Event savedEvent = eventRepository.save(event);
+        EventImage savedImage = savedEvent.getImages().get(savedEvent.getImages().size() - 1);
+
+        return EventImageDto.builder()
+                .id(savedImage.getId())
+                .imageUrl(savedImage.getImageUrl())
+                .displayOrder(savedImage.getDisplayOrder())
+                .build();
+    }
+
+    @Override
+    public FileUploadResponse uploadFileToMinio(String category, MultipartFile file) {
+        String targetBucket = switch (category != null ? category.toLowerCase() : "") {
+            case "event-images", "event-image" -> minioStorageService.getEventImagesBucket();
+            case "ticket-pdfs", "ticket-pdf" -> minioStorageService.getTicketPdfsBucket();
+            case "qr-tickets", "qr-ticket" -> minioStorageService.getQrTicketsBucket();
+            default -> minioStorageService.getUploadsBucket();
+        };
+
+        String url = minioStorageService.uploadMultipartFile(targetBucket, file);
+        return FileUploadResponse.builder()
+                .bucket(targetBucket)
+                .url(url)
+                .fileName(file.getOriginalFilename())
+                .contentType(file.getContentType())
+                .size(file.getSize())
+                .build();
     }
 
     private EventDto mapToDto(Event event) {
