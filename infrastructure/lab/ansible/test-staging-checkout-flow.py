@@ -26,8 +26,8 @@ DEFAULT_IP_GATEWAY = "http://192.168.56.10"
 DEFAULT_IP_KEYCLOAK = "http://192.168.56.13:8089"
 
 def log_step(name, status, details=""):
-    status_str = f"\033[92m[PASS]\033[0m" if status else f"\033[91m[FAIL]\033[0m"
-    print(f"  {name:<30} {status_str} {details}")
+    status_str = "PASS" if status else "FAIL"
+    print(f"  {name:<20} {status_str:<10} {details}")
 
 def get_keycloak_token(keycloak_base):
     url = f"{keycloak_base}/realms/dropzone/protocol/openid-connect/token"
@@ -152,5 +152,3 @@ def run_staging_checkout():
 
 if __name__ == "__main__":
     run_staging_checkout()
-EOF
-python3 /tmp/test_staging_checkout.py || true
