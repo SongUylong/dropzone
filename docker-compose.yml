@@ -149,6 +149,8 @@ services:
     container_name: dropzone-prometheus
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -164,6 +166,27 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/monitoring/grafana/dashboards/dropzone.json:/etc/grafana/dashboards/dropzone.json
+    networks:
+      - dropzone-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: dropzone-otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    ports:
+      - "4319:4317"
+      - "4320:4318"
+      - "18888:8888"
+      - "18889:8889"
+    volumes:
+      - ./infrastructure/monitoring/otel-collector-config.yml:/etc/otel-collector-config.yml
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
     networks:
       - dropzone-net
 
