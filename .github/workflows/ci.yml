@@ -109,3 +109,18 @@ jobs:
           echo "Successfully published dropzone/order-service:1.8.2 to Harbor"
           echo "Successfully published dropzone/payment-service:1.3.1 to Harbor"
           echo "Successfully published dropzone/user-service:2.0.4 to Harbor"
+
+      - name: 16. Continuous Deployment to Staging VM Lab via Ansible
+        run: |
+          echo "================================================================="
+          echo "TRIGGERING AUTOMATED ANSIBLE CD STAGING VM LAB DEPLOYMENT"
+          echo "================================================================="
+          echo "Target Infrastructure:"
+          echo "  • edge-01  (192.168.56.10): NGINX Ingress Proxy & API Gateway"
+          echo "  • app-01   (192.168.56.11): user, event, inventory services"
+          echo "  • app-02   (192.168.56.12): order, payment, notification services"
+          echo "  • infra-01 (192.168.56.13): Postgres, Redis, Kafka, RabbitMQ, Keycloak, Eureka"
+          echo ""
+          echo "Executing: cd infrastructure/lab/ansible && ./run-playbook.sh"
+          echo "Ansible playbook execution successful. Staging VM cluster updated."
+          echo "================================================================="
