@@ -8,6 +8,9 @@ spring:
     active: development
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  cloud:
+    config:
+      fail-fast: true
 
 eureka:
   instance:
