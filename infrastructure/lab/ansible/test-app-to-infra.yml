@@ -1,0 +1,68 @@
+---
+# Step 9 — Remote Infrastructure Connectivity Verification Playbook from app-01 & app-02 -> infra-01
+
+- name: Verify App VMs Connectivity to Remote Infra-01 (192.168.56.13)
+  hosts: app
+  gather_facts: false
+  vars:
+    infra_ip: "192.168.56.13"
+  tasks:
+    - name: Test TCP connection to infra-01 PostgreSQL (5432)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 5432
+        timeout: 5
+      register: postgres_conn
+
+    - name: Test TCP connection to infra-01 Redis (6379)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 6379
+        timeout: 5
+      register: redis_conn
+
+    - name: Test TCP connection to infra-01 Kafka (9092)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 9092
+        timeout: 5
+      register: kafka_conn
+
+    - name: Test TCP connection to infra-01 RabbitMQ (5672)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 5672
+        timeout: 5
+      register: rabbitmq_conn
+
+    - name: Test TCP connection to infra-01 Eureka Server (8761)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 8761
+        timeout: 5
+      register: eureka_conn
+
+    - name: Test TCP connection to infra-01 Config Server (8888)
+      wait_for:
+        host: "{{ infra_ip }}"
+        port: 8888
+        timeout: 5
+      register: configserver_conn
+
+    - name: Test HTTP request to infra-01 Eureka Actuator Health
+      uri:
+        url: "http://{{ infra_ip }}:8761/actuator/health"
+        status_code: 200
+      register: eureka_health
+
+    - name: Test HTTP request to infra-01 Config Server Actuator Health
+      uri:
+        url: "http://{{ infra_ip }}:8888/actuator/health"
+        status_code: 200
+      register: config_health
+
+    - name: Print Connectivity Summary
+      debug:
+        msg: >
+          [✓] {{ inventory_hostname }} -> infra-01 (192.168.56.13) CONNECTIVITY VERIFIED:
+          PostgreSQL: OK | Redis: OK | Kafka: OK | RabbitMQ: OK | Eureka: OK | Config Server: OK
