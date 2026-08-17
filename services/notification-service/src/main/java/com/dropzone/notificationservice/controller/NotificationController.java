@@ -24,4 +24,9 @@ public class NotificationController {
     public ResponseEntity<List<NotificationRecord>> getNotificationsByOrderNumber(@PathVariable String orderNumber) {
         return ResponseEntity.ok(notificationService.getNotificationsByOrderNumber(orderNumber));
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<NotificationRecord>> getNotificationsByUserId(@PathVariable String userId) {
+        return ResponseEntity.ok(notificationService.getNotificationsByUserId(userId));
+    }
 }
