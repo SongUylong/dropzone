@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build:
+      context: ./services/eureka-server
+      dockerfile: Dockerfile
+    container_name: dropzone-eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - dropzone-net
+
+networks:
+  dropzone-net:
+    driver: bridge
