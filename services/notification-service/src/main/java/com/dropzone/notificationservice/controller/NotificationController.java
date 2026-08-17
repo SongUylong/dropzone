@@ -2,8 +2,10 @@ package com.dropzone.notificationservice.controller;
 
 import com.dropzone.notificationservice.model.JobPayload;
 import com.dropzone.notificationservice.model.NotificationRecord;
+import com.dropzone.notificationservice.model.TicketRecord;
 import com.dropzone.notificationservice.service.JobService;
 import com.dropzone.notificationservice.service.NotificationService;
+import com.dropzone.notificationservice.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final JobService jobService;
+    private final TicketService ticketService;
 
     @GetMapping
     public ResponseEntity<List<NotificationRecord>> getAllNotifications() {
@@ -41,5 +44,24 @@ public class NotificationController {
     @GetMapping("/jobs/queue/{queueName}")
     public ResponseEntity<List<JobPayload>> getJobsByQueue(@PathVariable String queueName) {
         return ResponseEntity.ok(jobService.getJobsByQueue(queueName));
+    }
+
+    @GetMapping("/tickets")
+    public ResponseEntity<List<TicketRecord>> getAllTickets() {
+        return ResponseEntity.ok(ticketService.getAllTickets());
+    }
+
+    @GetMapping("/tickets/order/{orderNumber}")
+    public ResponseEntity<TicketRecord> getTicketByOrderNumber(@PathVariable String orderNumber) {
+        return ticketService.getTicketByOrderNumber(orderNumber)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/tickets/{ticketId}")
+    public ResponseEntity<TicketRecord> getTicketById(@PathVariable String ticketId) {
+        return ticketService.getTicketById(ticketId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
