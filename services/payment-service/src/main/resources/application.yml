@@ -1,14 +1,7 @@
-server:
-  port: 8083
-
 spring:
   application:
-    name: PAYMENT-SERVICE
-
-eureka:
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${random.value}
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+    name: payment-service
+  profiles:
+    active: development
+  config:
+    import: "configserver:http://localhost:8888"
