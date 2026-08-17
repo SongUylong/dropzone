@@ -1,5 +1,6 @@
 package com.dropzone.paymentservice.service;
 
+import com.dropzone.paymentservice.dto.ChaosConfigDto;
 import com.dropzone.paymentservice.dto.PaymentCallbackRequest;
 import com.dropzone.paymentservice.dto.PaymentDto;
 import com.dropzone.paymentservice.dto.ProcessPaymentRequest;
@@ -38,6 +39,34 @@ public class PaymentServiceImpl implements PaymentService {
     private static final String CACHE_KEY_PREFIX = "cache:payment:";
     private static final String CACHE_KEY_ORDER_PREFIX = "cache:payment:order:";
     private static final String CALLBACK_IDEMPOTENCY_PREFIX = "idempotency:callback:";
+    private static final String CHAOS_KEY = "chaos:payment:config";
+
+    @Override
+    public com.dropzone.paymentservice.dto.ChaosConfigDto getChaosConfig() {
+        try {
+            Object obj = redisTemplate.opsForValue().get(CHAOS_KEY);
+            if (obj != null) {
+                if (obj instanceof com.dropzone.paymentservice.dto.ChaosConfigDto dto) {
+                    return dto;
+                }
+                return objectMapper.convertValue(obj, com.dropzone.paymentservice.dto.ChaosConfigDto.class);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to read chaos config from Redis: {}", e.getMessage());
+        }
+        return com.dropzone.paymentservice.dto.ChaosConfigDto.builder().build();
+    }
+
+    @Override
+    public com.dropzone.paymentservice.dto.ChaosConfigDto updateChaosConfig(com.dropzone.paymentservice.dto.ChaosConfigDto config) {
+        try {
+            redisTemplate.opsForValue().set(CHAOS_KEY, config);
+            log.info("Updated Chaos Config in Redis: {}", config);
+        } catch (Exception e) {
+            log.error("Failed to update chaos config in Redis: {}", e.getMessage());
+        }
+        return config;
+    }
 
     @Override
     @Transactional
@@ -66,6 +95,34 @@ public class PaymentServiceImpl implements PaymentService {
                 .status("PENDING")
                 .timestamp(Instant.now())
                 .build());
+
+        // Chaos Lab Interceptor
+        ChaosConfigDto chaos = getChaosConfig();
+        if (chaos.isDisabled() || chaos.isHttp500()) {
+            log.warn("Chaos Lab: Simulating HTTP 500 / Service Disabled for Order {}", cleanOrderNumber);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Chaos Lab: Injected HTTP 500 Payment Error");
+        }
+        if (chaos.isTimeout()) {
+            try {
+                log.warn("Chaos Lab: Simulating Timeout (10,000ms delay) for Order {}", cleanOrderNumber);
+                Thread.sleep(10000);
+            } catch (InterruptedException ignored) {}
+        } else if (chaos.getLatencyMs() > 0) {
+            try {
+                log.info("Chaos Lab: Injected Latency {}ms for Order {}", chaos.getLatencyMs(), cleanOrderNumber);
+                Thread.sleep(chaos.getLatencyMs());
+            } catch (InterruptedException ignored) {}
+        }
+        if (chaos.getFailureRate() > 0) {
+            int rand = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
+            if (rand < chaos.getFailureRate()) {
+                log.warn("Chaos Lab: Injected {}% Failure Rate hit for Order {}", chaos.getFailureRate(), cleanOrderNumber);
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Chaos Lab: Injected Payment Failure (" + chaos.getFailureRate() + "% Failure Rate)");
+            }
+        }
 
         MockPayResponse response = mockPayProvider.processPayment(cleanOrderNumber, amount, mode, request.getCustomFailureReason());
 

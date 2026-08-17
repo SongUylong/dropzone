@@ -1,5 +1,6 @@
 package com.dropzone.paymentservice.controller;
 
+import com.dropzone.paymentservice.dto.ChaosConfigDto;
 import com.dropzone.paymentservice.dto.PaymentCallbackRequest;
 import com.dropzone.paymentservice.dto.PaymentDto;
 import com.dropzone.paymentservice.dto.ProcessPaymentRequest;
@@ -41,5 +42,15 @@ public class PaymentController {
     @GetMapping("/number/{orderNumber}/view")
     public ResponseEntity<String> getFormattedUserView(@PathVariable String orderNumber) {
         return ResponseEntity.ok(paymentService.getFormattedUserViewByOrderNumber(orderNumber));
+    }
+
+    @GetMapping("/chaos")
+    public ResponseEntity<ChaosConfigDto> getChaosConfig() {
+        return ResponseEntity.ok(paymentService.getChaosConfig());
+    }
+
+    @PostMapping("/chaos")
+    public ResponseEntity<ChaosConfigDto> updateChaosConfig(@RequestBody ChaosConfigDto config) {
+        return ResponseEntity.ok(paymentService.updateChaosConfig(config));
     }
 }

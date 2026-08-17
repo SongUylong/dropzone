@@ -29,7 +29,7 @@ public class SecurityConfig {
         http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/actuator/**", "/eureka/**").permitAll()
+                .pathMatchers("/actuator/**", "/eureka/**", "/api/chaos", "/api/chaos/**", "/chaos", "/chaos/**").permitAll()
                 .pathMatchers("/api/orders", "/api/orders/**", "/orders", "/orders/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
                 .pathMatchers("/api/payments", "/api/payments/**", "/payments", "/payments/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
                 .pathMatchers("/api/audit", "/api/audit/**", "/audit", "/audit/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")

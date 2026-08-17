@@ -6,6 +6,8 @@ import com.dropzone.notificationservice.service.JobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -15,12 +17,29 @@ public class EmailWorker {
 
     private final JobService jobService;
 
+    @Autowired(required = false)
+    private StringRedisTemplate redisTemplate;
+
     @RabbitListener(queues = RabbitMQConfig.QUEUE_EMAIL)
     public void processEmailJob(JobPayload job) {
         log.info("[Email Worker] Consumed job from RabbitMQ queue '{}': JobId={}, Order={}, User={}",
                 RabbitMQConfig.QUEUE_EMAIL, job.getJobId(), job.getOrderNumber(), job.getUserId());
 
         try {
+            // Chaos Lab Check
+            if (redisTemplate != null) {
+                Boolean slow = "true".equalsIgnoreCase(redisTemplate.opsForValue().get("chaos:notification:slow_worker"));
+                Boolean reject = "true".equalsIgnoreCase(redisTemplate.opsForValue().get("chaos:notification:reject_messages"));
+                if (slow != null && slow) {
+                    log.warn("Chaos Lab: EmailWorker delaying processing by 5000ms...");
+                    Thread.sleep(5000);
+                }
+                if (reject != null && reject) {
+                    log.warn("Chaos Lab: EmailWorker rejecting job {}", job.getJobId());
+                    throw new RuntimeException("Chaos Lab: Injected message rejection");
+                }
+            }
+
             // Simulate sending email confirmation
             Thread.sleep(100);
         } catch (InterruptedException ignored) {

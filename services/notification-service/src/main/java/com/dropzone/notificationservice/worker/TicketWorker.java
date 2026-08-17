@@ -11,6 +11,8 @@ import com.dropzone.notificationservice.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -26,12 +28,29 @@ public class TicketWorker {
     private final MinioStorageService minioStorageService;
     private final TicketService ticketService;
 
+    @Autowired(required = false)
+    private StringRedisTemplate redisTemplate;
+
     @RabbitListener(queues = RabbitMQConfig.QUEUE_TICKET_GENERATION)
     public void processTicketGenerationJob(JobPayload job) {
         log.info("[Ticket Worker] Consumed job from RabbitMQ queue '{}': JobId={}, Order={}",
                 RabbitMQConfig.QUEUE_TICKET_GENERATION, job.getJobId(), job.getOrderNumber());
 
         try {
+            // Chaos Lab Check
+            if (redisTemplate != null) {
+                Boolean slow = "true".equalsIgnoreCase(redisTemplate.opsForValue().get("chaos:notification:slow_worker"));
+                Boolean reject = "true".equalsIgnoreCase(redisTemplate.opsForValue().get("chaos:notification:reject_messages"));
+                if (slow != null && slow) {
+                    log.warn("Chaos Lab: TicketWorker delaying processing by 5000ms...");
+                    Thread.sleep(5000);
+                }
+                if (reject != null && reject) {
+                    log.warn("Chaos Lab: TicketWorker rejecting job {}", job.getJobId());
+                    throw new RuntimeException("Chaos Lab: Injected message rejection");
+                }
+            }
+
             String orderNumber = job.getOrderNumber() != null ? job.getOrderNumber() : "DZ10239";
             
             // Format Ticket ID as DZ-928231 or derived from order
