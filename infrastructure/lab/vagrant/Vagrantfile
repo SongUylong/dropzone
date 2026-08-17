@@ -1,0 +1,102 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Base Box: Ubuntu Server 24.04 LTS (Noble Numbat)
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_check_update = false
+
+  # SSH configuration
+  config.ssh.insert_key = false
+
+  # =========================================================================
+  # 1. edge-01: NGINX + API Gateway
+  # =========================================================================
+  config.vm.define "edge-01" do |node|
+    node.vm.hostname = "edge-01"
+    node.vm.network "private_network", ip: "192.168.56.10"
+    
+    # Port forwarding for Gateway external ingress
+    node.vm.network "forwarded_port", guest: 80, host: 8000, auto_correct: true
+    node.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+
+    # VMware Workstation / Desktop settings
+    node.vm.provider "vmware_desktop" do |v|
+      v.vmx["memsize"] = "2048"
+      v.vmx["numvcpus"] = "2"
+      v.gui = false
+    end
+
+    # Fallback VirtualBox settings
+    node.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+      v.gui = false
+    end
+  end
+
+  # =========================================================================
+  # 2. app-01: user-service, event-service, inventory-service
+  # =========================================================================
+  config.vm.define "app-01" do |node|
+    node.vm.hostname = "app-01"
+    node.vm.network "private_network", ip: "192.168.56.11"
+
+    node.vm.provider "vmware_desktop" do |v|
+      v.vmx["memsize"] = "3072"
+      v.vmx["numvcpus"] = "2"
+      v.gui = false
+    end
+
+    node.vm.provider "virtualbox" do |v|
+      v.memory = 3072
+      v.cpus = 2
+      v.gui = false
+    end
+  end
+
+  # =========================================================================
+  # 3. app-02: order-service, payment-service, notification-service
+  # =========================================================================
+  config.vm.define "app-02" do |node|
+    node.vm.hostname = "app-02"
+    node.vm.network "private_network", ip: "192.168.56.12"
+
+    node.vm.provider "vmware_desktop" do |v|
+      v.vmx["memsize"] = "3072"
+      v.vmx["numvcpus"] = "2"
+      v.gui = false
+    end
+
+    node.vm.provider "virtualbox" do |v|
+      v.memory = 3072
+      v.cpus = 2
+      v.gui = false
+    end
+  end
+
+  # =========================================================================
+  # 4. infra-01: Eureka, Config Server, Keycloak, Postgres, Redis, Kafka, RabbitMQ
+  # =========================================================================
+  config.vm.define "infra-01" do |node|
+    node.vm.hostname = "infra-01"
+    node.vm.network "private_network", ip: "192.168.56.13"
+
+    # Forwarding ports for key dashboards / services
+    node.vm.network "forwarded_port", guest: 8761, host: 8761, auto_correct: true
+    node.vm.network "forwarded_port", guest: 8888, host: 8888, auto_correct: true
+    node.vm.network "forwarded_port", guest: 8089, host: 8089, auto_correct: true
+
+    node.vm.provider "vmware_desktop" do |v|
+      v.vmx["memsize"] = "6144"
+      v.vmx["numvcpus"] = "4"
+      v.gui = false
+    end
+
+    node.vm.provider "virtualbox" do |v|
+      v.memory = 6144
+      v.cpus = 4
+      v.gui = false
+    end
+  end
+end
