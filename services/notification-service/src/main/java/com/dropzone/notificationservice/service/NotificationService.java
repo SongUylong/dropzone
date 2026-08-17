@@ -23,20 +23,21 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final ObjectMapper objectMapper;
+    private final JobService jobService;
     private final List<NotificationRecord> notifications = Collections.synchronizedList(new ArrayList<>());
     private final AtomicLong idGenerator = new AtomicLong(1);
 
-    @KafkaListener(id = "notif-order-listener", topics = "order-events", groupId = "notification-group-v2")
+    @KafkaListener(id = "notif-order-listener", topics = "order-events", groupId = "notification-service-jobs-group")
     public void listenOrderEvents(String message) {
         handleEvent(message, "order-events");
     }
 
-    @KafkaListener(id = "notif-payment-listener", topics = "payment-events", groupId = "notification-group-v2")
+    @KafkaListener(id = "notif-payment-listener", topics = "payment-events", groupId = "notification-service-jobs-group")
     public void listenPaymentEvents(String message) {
         handleEvent(message, "payment-events");
     }
 
-    @KafkaListener(id = "notif-inventory-listener", topics = "inventory-events", groupId = "notification-group-v2")
+    @KafkaListener(id = "notif-inventory-listener", topics = "inventory-events", groupId = "notification-service-jobs-group")
     public void listenInventoryEvents(String message) {
         handleEvent(message, "inventory-events");
     }
@@ -88,6 +89,11 @@ public class NotificationService {
 
         notifications.add(record);
         log.info("Notification recorded: {}", msgText);
+
+        // If event is OrderConfirmed, dispatch worker jobs to RabbitMQ queues (ticket-generation.queue, email.queue, sms.queue)
+        if ("OrderConfirmed".equalsIgnoreCase(eventType)) {
+            jobService.dispatchJobsForOrderConfirmed(orderNumber, userId);
+        }
     }
 
     public List<NotificationRecord> getAllNotifications() {
