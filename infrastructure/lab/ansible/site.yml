@@ -81,30 +81,40 @@
         - { name: 'net.core.somaxconn', value: '1024' }
 
 # =========================================================================
-# 2. EDGE SERVER (edge-01): NGINX Ingress Proxy
+# 2. EDGE SERVER (edge-01): NGINX Ingress Proxy & API Gateway
 # =========================================================================
 - name: Provision Edge Ingress (edge-01)
   hosts: edge
   become: true
   tasks:
-    - name: Install NGINX web server
-      apt:
-        name: nginx
-        state: present
-
-    - name: Ensure NGINX service is enabled and running
-      systemd:
-        name: nginx
-        state: started
-        enabled: true
-
-    - name: Create Dropzone NGINX proxy directory
+    - name: Create Dropzone edge deployment directory
       file:
-        path: /opt/dropzone/nginx
+        path: /opt/dropzone/edge
         state: directory
         owner: vagrant
         group: docker
         mode: '0775'
+
+    - name: Copy NGINX edge configuration file
+      copy:
+        src: ../docker/nginx-edge.conf
+        dest: /opt/dropzone/edge/nginx-edge.conf
+        owner: vagrant
+        group: docker
+        mode: '0644'
+
+    - name: Copy Edge Docker Compose stack (NGINX + API Gateway)
+      copy:
+        src: ../docker/docker-compose-edge.yml
+        dest: /opt/dropzone/edge/docker-compose.yml
+        owner: vagrant
+        group: docker
+        mode: '0644'
+
+    - name: Ensure Edge services are running via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/dropzone/edge
+        state: present
 
 # =========================================================================
 # 3. APP SERVERS (app-01, app-02): Microservices Runtime Environment
