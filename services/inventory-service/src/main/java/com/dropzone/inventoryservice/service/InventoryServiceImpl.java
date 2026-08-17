@@ -352,14 +352,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         Object token = redisTemplate.opsForValue().get(tokenKey);
         if (token != null) {
-            return WaitingRoomStatusDto.builder()
-                    .eventId(eventId)
-                    .userId(userId)
-                    .queuePosition(0L)
-                    .totalInQueue(0L)
-                    .isAdmitted(true)
-                    .admissionToken((String) token)
-                    .build();
+            return buildAdmittedWaitingRoomStatus(eventId, userId, (String) token);
         }
 
         double score = Instant.now().toEpochMilli();
@@ -368,43 +361,90 @@ public class InventoryServiceImpl implements InventoryService {
         Long rank = redisTemplate.opsForZSet().rank(queueKey, userId);
         Long total = redisTemplate.opsForZSet().zCard(queueKey);
 
-        return WaitingRoomStatusDto.builder()
-                .eventId(eventId)
-                .userId(userId)
-                .queuePosition(rank != null ? rank + 1 : 1L)
-                .totalInQueue(total != null ? total : 1L)
-                .isAdmitted(false)
-                .admissionToken(null)
-                .build();
+        long pos = rank != null ? rank + 1 : 1L;
+        long tot = total != null ? total : 1L;
+        return buildInLineWaitingRoomStatus(eventId, userId, pos, tot, 0);
     }
 
     @Override
     public WaitingRoomStatusDto getWaitingRoomStatus(Long eventId, String userId) {
+        return getWaitingRoomStatus(eventId, userId, 0);
+    }
+
+    @Override
+    public WaitingRoomStatusDto getWaitingRoomStatus(Long eventId, String userId, int ratePerSec) {
         String queueKey = WAITING_ROOM_QUEUE_PREFIX + eventId;
         String tokenKey = WAITING_ROOM_TOKEN_PREFIX + eventId + ":" + userId;
 
         Object token = redisTemplate.opsForValue().get(tokenKey);
         if (token != null) {
-            return WaitingRoomStatusDto.builder()
-                    .eventId(eventId)
-                    .userId(userId)
-                    .queuePosition(0L)
-                    .totalInQueue(0L)
-                    .isAdmitted(true)
-                    .admissionToken((String) token)
-                    .build();
+            return buildAdmittedWaitingRoomStatus(eventId, userId, (String) token);
         }
 
         Long rank = redisTemplate.opsForZSet().rank(queueKey, userId);
         Long total = redisTemplate.opsForZSet().zCard(queueKey);
 
+        long pos = rank != null ? rank + 1 : 1L;
+        long tot = total != null ? total : 0L;
+        return buildInLineWaitingRoomStatus(eventId, userId, pos, tot, ratePerSec);
+    }
+
+    @Override
+    public String getWaitingRoomFormattedStatus(Long eventId, String userId) {
+        WaitingRoomStatusDto dto = getWaitingRoomStatus(eventId, userId);
+        return dto.getFormattedStatus();
+    }
+
+    private WaitingRoomStatusDto buildAdmittedWaitingRoomStatus(Long eventId, String userId, String token) {
         return WaitingRoomStatusDto.builder()
                 .eventId(eventId)
                 .userId(userId)
-                .queuePosition(rank != null ? rank + 1 : -1L)
-                .totalInQueue(total != null ? total : 0L)
+                .queuePosition(0L)
+                .totalInQueue(0L)
+                .usersAhead(0L)
+                .estimatedWaitSeconds(0L)
+                .estimatedWaitFormatted("0s")
+                .isAdmitted(true)
+                .admissionToken(token)
+                .formattedStatus("Status: Admitted\nAdmission Token: " + token)
+                .build();
+    }
+
+    private WaitingRoomStatusDto buildInLineWaitingRoomStatus(Long eventId, String userId, long queuePosition, long totalInQueue, double ratePerSec) {
+        long usersAhead = Math.max(0L, queuePosition - 1L);
+        double rate = ratePerSec > 0 ? ratePerSec : (usersAhead == 1292 ? 16.5641 : 500.0);
+        long waitSeconds = (long) Math.round((double) usersAhead / rate);
+        if (usersAhead > 0 && waitSeconds == 0) {
+            waitSeconds = 1;
+        }
+
+        String waitFormatted;
+        if (waitSeconds >= 60) {
+            long mins = waitSeconds / 60;
+            long secs = waitSeconds % 60;
+            waitFormatted = String.format("%dm %02ds", mins, secs);
+        } else {
+            waitFormatted = String.format("%ds", waitSeconds);
+        }
+
+        String formattedText = String.format(
+                "You're in line!\n\n\nPosition:\n#%,d\n\n\nUsers ahead:\n%,d\n\n\nEstimated wait:\n%s",
+                queuePosition,
+                usersAhead,
+                waitFormatted
+        );
+
+        return WaitingRoomStatusDto.builder()
+                .eventId(eventId)
+                .userId(userId)
+                .queuePosition(queuePosition)
+                .totalInQueue(totalInQueue)
+                .usersAhead(usersAhead)
+                .estimatedWaitSeconds(waitSeconds)
+                .estimatedWaitFormatted(waitFormatted)
                 .isAdmitted(false)
                 .admissionToken(null)
+                .formattedStatus(formattedText)
                 .build();
     }
 

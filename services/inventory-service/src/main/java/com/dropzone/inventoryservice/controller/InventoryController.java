@@ -101,9 +101,18 @@ public class InventoryController {
     @GetMapping("/waiting-room/{eventId}/status")
     public ResponseEntity<WaitingRoomStatusDto> getWaitingRoomStatus(
             @PathVariable Long eventId,
-            @RequestParam String userId) {
-        WaitingRoomStatusDto dto = inventoryService.getWaitingRoomStatus(eventId, userId);
+            @RequestParam String userId,
+            @RequestParam(required = false, defaultValue = "0") int ratePerSec) {
+        WaitingRoomStatusDto dto = inventoryService.getWaitingRoomStatus(eventId, userId, ratePerSec);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping(value = "/waiting-room/{eventId}/formatted", produces = "text/plain")
+    public ResponseEntity<String> getWaitingRoomFormattedStatus(
+            @PathVariable Long eventId,
+            @RequestParam String userId) {
+        String formatted = inventoryService.getWaitingRoomFormattedStatus(eventId, userId);
+        return ResponseEntity.ok(formatted);
     }
 
     @PostMapping("/waiting-room/{eventId}/admit")

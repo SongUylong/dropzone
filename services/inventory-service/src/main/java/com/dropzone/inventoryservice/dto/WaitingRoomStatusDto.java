@@ -16,6 +16,10 @@ public class WaitingRoomStatusDto implements Serializable {
     private String userId;
     private Long queuePosition; // 1-based rank
     private Long totalInQueue;
+    private Long usersAhead;
+    private Long estimatedWaitSeconds;
+    private String estimatedWaitFormatted;
     private boolean isAdmitted;
     private String admissionToken;
+    private String formattedStatus;
 }

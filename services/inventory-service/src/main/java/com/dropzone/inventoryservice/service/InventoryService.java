@@ -29,6 +29,8 @@ public interface InventoryService {
     // 6. Flash Sale Waiting Room (Redis Keys: waiting_room:queue:{eventId}, waiting_room:token:{userId})
     WaitingRoomStatusDto joinWaitingRoom(Long eventId, String userId);
     WaitingRoomStatusDto getWaitingRoomStatus(Long eventId, String userId);
+    WaitingRoomStatusDto getWaitingRoomStatus(Long eventId, String userId, int ratePerSec);
+    String getWaitingRoomFormattedStatus(Long eventId, String userId);
     List<String> admitWaitingRoomUsers(Long eventId, int count);
 
     // 7. Temporary Checkout State (Redis Key: checkout:{sessionId})
