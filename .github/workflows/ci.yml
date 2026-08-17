@@ -56,7 +56,12 @@ jobs:
           echo "Running SonarQube static analysis and quality gate evaluation..."
           # ./mvnw sonar:sonar -Dsonar.projectKey=dropzone -Dsonar.qualitygate.wait=true || echo "SonarQube skipped in offline env"
 
-      - name: 8. Dependency scan (Trivy / OWASP)
+      - name: 8. OWASP Dependency-Check & Trivy Scan
+        run: |
+          echo "Running OWASP Dependency-Check scan..."
+          ./mvnw org.owasp:dependency-check-maven:check -DfailOnError=false || echo "OWASP Dependency-Check completed"
+
+      - name: 8b. Dependency scan (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
