@@ -1,0 +1,20 @@
+---
+- name: Verify Dropzone 192.168.56.0/24 Private Network Inter-VM Connectivity
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Ping edge-01 (192.168.56.10)
+      ansible.builtin.command: ping -c 2 192.168.56.10
+      changed_when: false
+
+    - name: Ping app-01 (192.168.56.11)
+      ansible.builtin.command: ping -c 2 192.168.56.11
+      changed_when: false
+
+    - name: Ping app-02 (192.168.56.12)
+      ansible.builtin.command: ping -c 2 192.168.56.12
+      changed_when: false
+
+    - name: Ping infra-01 (192.168.56.13)
+      ansible.builtin.command: ping -c 2 192.168.56.13
+      changed_when: false
