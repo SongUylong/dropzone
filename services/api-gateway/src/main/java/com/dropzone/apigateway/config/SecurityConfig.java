@@ -31,6 +31,7 @@ public class SecurityConfig {
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/actuator/**", "/eureka/**").permitAll()
                 .pathMatchers("/api/orders/**", "/orders/**").hasAnyRole("USER", "ADMIN")
+                .pathMatchers("/api/inventory/**", "/inventory/**").hasAnyRole("USER", "ORGANIZER", "ADMIN")
                 .pathMatchers("/api/events/**", "/events/**").hasAnyRole("ORGANIZER", "ADMIN")
                 .pathMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                 .pathMatchers("/api/users/**", "/users/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
