@@ -30,11 +30,11 @@ public class SecurityConfig {
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/actuator/**", "/eureka/**").permitAll()
-                .pathMatchers("/api/orders/**", "/orders/**").hasAnyRole("USER", "ADMIN")
-                .pathMatchers("/api/inventory/**", "/inventory/**").hasAnyRole("USER", "ORGANIZER", "ADMIN")
-                .pathMatchers("/api/events/**", "/events/**").hasAnyRole("ORGANIZER", "ADMIN")
-                .pathMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
-                .pathMatchers("/api/users/**", "/users/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
+                .pathMatchers("/api/orders", "/api/orders/**", "/orders", "/orders/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
+                .pathMatchers("/api/inventory", "/api/inventory/**", "/inventory", "/inventory/**").hasAnyRole("USER", "ORGANIZER", "ADMIN")
+                .pathMatchers("/api/events", "/api/events/**", "/events", "/events/**").hasAnyRole("ORGANIZER", "ADMIN")
+                .pathMatchers("/api/admin", "/api/admin/**", "/admin", "/admin/**").hasRole("ADMIN")
+                .pathMatchers("/api/users", "/api/users/**", "/users", "/users/**").hasAnyRole("USER", "ORGANIZER", "SUPPORT", "ADMIN")
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

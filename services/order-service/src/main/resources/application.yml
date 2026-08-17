@@ -1,9 +1,13 @@
 server:
-  port: 8082
+  port: 8083
 
 spring:
   application:
-    name: ORDER-SERVICE
+    name: order-service
+  profiles:
+    active: development
+  config:
+    import: "configserver:http://localhost:8888"
 
 eureka:
   instance:
