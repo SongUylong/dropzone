@@ -1,13 +1,15 @@
 package com.dropzone.orderservice.service;
 
-import com.dropzone.orderservice.dto.CreateOrderRequest;
+import com.dropzone.orderservice.client.PaymentClient;
+import com.dropzone.orderservice.dto.*;
 import com.dropzone.orderservice.exception.InvalidOrderStateException;
 import com.dropzone.orderservice.exception.OrderNotFoundException;
 import com.dropzone.orderservice.model.Order;
-import com.dropzone.orderservice.dto.OrderDto;
 import com.dropzone.orderservice.model.OrderStatus;
 import com.dropzone.orderservice.repository.OrderRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,6 +31,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final PaymentClient paymentClient;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     private static final String CACHE_KEY_PREFIX = "cache:order:";
     private static final String CACHE_KEY_NUM_PREFIX = "cache:order:number:";
@@ -77,7 +81,6 @@ public class OrderServiceImpl implements OrderService {
             String lockKey = CACHE_KEY_IDEMPOTENCY_LOCK + activeKey;
             Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "LOCKED", 10, TimeUnit.SECONDS);
             if (Boolean.FALSE.equals(acquired)) {
-                // Lock held by another thread, poll once or re-check DB
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException ignored) {
@@ -125,12 +128,10 @@ public class OrderServiceImpl implements OrderService {
             // PENDING -> RESERVED
             saved.setStatus(OrderStatus.RESERVED);
             saved = orderRepository.save(saved);
-            log.info("Order {} transitioned to RESERVED", saved.getOrderNumber());
 
             // RESERVED -> PAYMENT_PENDING
             saved.setStatus(OrderStatus.PAYMENT_PENDING);
             saved = orderRepository.save(saved);
-            log.info("Order {} transitioned to PAYMENT_PENDING", saved.getOrderNumber());
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             log.warn("Database unique constraint triggered for idempotencyKey: {}, fetching existing order", activeKey);
@@ -257,12 +258,8 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order saved = orderRepository.save(order);
-        log.info("Order {} transitioned PAYMENT_PENDING -> PAID", saved.getOrderNumber());
-
-        // Auto transition PAID -> CONFIRMED
         saved.setStatus(OrderStatus.CONFIRMED);
         saved = orderRepository.save(saved);
-        log.info("Order {} transitioned PAID -> CONFIRMED", saved.getOrderNumber());
 
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
@@ -294,8 +291,6 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.FAILED);
 
         Order saved = orderRepository.save(order);
-        log.info("Order {} transitioned to FAILED. Reason: {}", saved.getOrderNumber(), reason);
-
         OrderDto dto = mapToDto(saved);
         cacheOrder(dto);
         return dto;
@@ -317,6 +312,60 @@ public class OrderServiceImpl implements OrderService {
         } else {
             throw new InvalidOrderStateException("Unsupported target status: " + targetStatus);
         }
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponseDto processOrderPayment(Long orderId, ProcessPaymentRequestDto paymentRequest) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
+
+        if (paymentRequest.getOrderNumber() == null || paymentRequest.getOrderNumber().isBlank()) {
+            paymentRequest.setOrderNumber(order.getOrderNumber());
+        }
+        if (paymentRequest.getAmount() == null) {
+            paymentRequest.setAmount(order.getTotalAmount());
+        }
+
+        log.info("OrderService calling PaymentClient for orderId: {}, orderNumber: {}", orderId, order.getOrderNumber());
+        PaymentResponseDto response = paymentClient.processPayment(paymentRequest);
+
+        if ("SUCCESS".equalsIgnoreCase(response.getStatus())) {
+            if (order.getStatus() == OrderStatus.PAYMENT_PENDING) {
+                markPaid(orderId, response.getPaymentId());
+            }
+        } else {
+            if (order.getStatus() == OrderStatus.PAYMENT_PENDING) {
+                markFailed(orderId, response.getFailureReason());
+            }
+        }
+
+        return response;
+    }
+
+    @Override
+    public ResilienceStatusDto getResilienceStatus() {
+        CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("paymentService");
+        CircuitBreaker.Metrics metrics = cb.getMetrics();
+
+        return ResilienceStatusDto.builder()
+                .circuitBreakerName("paymentService")
+                .state(cb.getState().name())
+                .failureRate(metrics.getFailureRate())
+                .slowCallRate(metrics.getSlowCallRate())
+                .numberOfBufferedCalls(metrics.getNumberOfBufferedCalls())
+                .numberOfFailedCalls(metrics.getNumberOfFailedCalls())
+                .numberOfSuccessfulCalls(metrics.getNumberOfSuccessfulCalls())
+                .numberOfNotPermittedCalls(metrics.getNumberOfNotPermittedCalls())
+                .isCircuitBreakerOpen(cb.getState() == CircuitBreaker.State.OPEN)
+                .build();
+    }
+
+    @Override
+    public void resetCircuitBreaker() {
+        CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("paymentService");
+        cb.reset();
+        log.info("Circuit breaker 'paymentService' reset to CLOSED");
     }
 
     private void validateTransition(OrderStatus current, OrderStatus target) {

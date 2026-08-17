@@ -1,8 +1,6 @@
 package com.dropzone.orderservice.controller;
 
-import com.dropzone.orderservice.dto.CreateOrderRequest;
-import com.dropzone.orderservice.dto.UpdateOrderStatusRequest;
-import com.dropzone.orderservice.dto.OrderDto;
+import com.dropzone.orderservice.dto.*;
 import com.dropzone.orderservice.model.OrderStatus;
 import com.dropzone.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -84,5 +82,27 @@ public class OrderController {
             @PathVariable Long id,
             @RequestBody UpdateOrderStatusRequest request) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, request.getStatus(), request.getPaymentId()));
+    }
+
+    @PostMapping("/{id}/process-payment")
+    public ResponseEntity<PaymentResponseDto> processOrderPayment(
+            @PathVariable Long id,
+            @RequestBody(required = false) ProcessPaymentRequestDto paymentRequest) {
+        if (paymentRequest == null) {
+            paymentRequest = new ProcessPaymentRequestDto();
+        }
+        PaymentResponseDto response = orderService.processOrderPayment(id, paymentRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/resilience-status")
+    public ResponseEntity<ResilienceStatusDto> getResilienceStatus() {
+        return ResponseEntity.ok(orderService.getResilienceStatus());
+    }
+
+    @PostMapping("/resilience-reset")
+    public ResponseEntity<String> resetCircuitBreaker() {
+        orderService.resetCircuitBreaker();
+        return ResponseEntity.ok("Circuit breaker reset to CLOSED");
     }
 }

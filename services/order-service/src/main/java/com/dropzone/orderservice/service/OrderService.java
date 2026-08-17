@@ -1,7 +1,6 @@
 package com.dropzone.orderservice.service;
 
-import com.dropzone.orderservice.dto.CreateOrderRequest;
-import com.dropzone.orderservice.dto.OrderDto;
+import com.dropzone.orderservice.dto.*;
 import com.dropzone.orderservice.model.OrderStatus;
 
 import java.util.List;
@@ -21,4 +20,8 @@ public interface OrderService {
     OrderDto markFailed(Long id, String reason);
 
     OrderDto updateOrderStatus(Long id, OrderStatus targetStatus, String paymentId);
+
+    PaymentResponseDto processOrderPayment(Long orderId, ProcessPaymentRequestDto paymentRequest);
+    ResilienceStatusDto getResilienceStatus();
+    void resetCircuitBreaker();
 }
