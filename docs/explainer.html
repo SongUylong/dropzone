@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropZone — 10-Section Master Learning Roadmap & Deep-Dive Explainer</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Devicon Icons -->
+    <link rel="stylesheet" type='text/css' href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
+    <!-- Prism.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+        <style>
+        :root {
+            --bg-primary: #07090e;
+            --bg-secondary: #0d111a;
+            --bg-tertiary: #161c28;
+            --bg-card: rgba(16, 22, 34, 0.85);
+            --bg-card-hover: rgba(22, 30, 48, 0.95);
+            --border: #222c3d;
+            --border-accent: rgba(99, 102, 241, 0.35);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-secondary: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+            font-size: 1.12rem;
+            min-height: 100vh;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Fullscreen Header / Navbar */
+        .top-navbar {
+            background: rgba(13, 17, 26, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #fff;
+        }
+
+        .top-nav-brand span {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .top-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .top-nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.98rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .top-nav-links a:hover {
+            color: #fff;
+        }
+
+        /* Main Content Layout - Full Screen */
+        #main-content {
+            width: 100%;
+            max-width: 1720px;
+            margin: 0 auto;
+            padding: 56px 48px 120px 48px;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15), transparent 70%),
+                        linear-gradient(180deg, rgba(22, 28, 40, 0.8), rgba(13, 17, 26, 0.95));
+            border: 1px solid var(--border-accent);
+            border-radius: 20px;
+            padding: 56px 64px;
+            margin-bottom: 48px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.18);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #c7d2fe;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.18;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 1100px;
+            line-height: 1.7;
+        }
+
+        /* Section Container Boxes */
+        .section-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 56px;
+            margin-bottom: 48px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        .step-badge {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+
+        .step-badge.deep-dive {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        }
+
+        .section-header h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Grid for Keywords */
+        .ten-sections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .sec-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+        }
+
+        .sec-card:hover {
+            border-color: rgba(99, 102, 241, 0.6);
+            transform: translateY(-3px);
+            background: var(--bg-card-hover);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+        }
+
+        .sec-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .sec-card-num {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #818cf8;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .sec-card-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .sec-card-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .sec-card-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tech-tag {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Deep Dive & Code Container */
+        .deepdive-container {
+            margin-top: 32px;
+        }
+
+        .concept-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin: 36px 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 12px;
+        }
+
+        .explanation-text {
+            color: #cbd5e1;
+            font-size: 1.12rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .code-box {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            overflow: hidden;
+            margin: 24px 0 28px 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .code-box-header {
+            background: #111827;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1f2937;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.92rem;
+            color: #94a3b8;
+        }
+
+        .code-box pre {
+            margin: 0;
+            padding: 24px !important;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.98rem;
+            line-height: 1.65;
+            background: transparent !important;
+            max-height: 600px;
+            overflow: auto;
+        }
+
+        .callout-box {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 4px solid var(--accent-primary);
+            padding: 24px 30px;
+            border-radius: 0 12px 12px 0;
+            margin: 28px 0;
+            font-size: 1.1rem;
+        }
+
+        .callout-box.success {
+            border-left-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .callout-box.warning {
+            border-left-color: var(--accent-amber);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        code:not(pre code) {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e7ff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.94em;
+        }
+
+        /* --- Floating Sticky Action Button (Always Visible On Top) --- */
+        .drawer-toggle-btn {
+            position: fixed !important;
+            right: 28px !important;
+            bottom: 28px !important;
+            background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+            color: #ffffff !important;
+            border: 2px solid rgba(255, 255, 255, 0.25) !important;
+            border-radius: 999px !important;
+            padding: 14px 24px !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            cursor: pointer !important;
+            box-shadow: 0 12px 30px -4px rgba(99, 102, 241, 0.8), 0 0 15px rgba(168, 85, 247, 0.5) !important;
+            z-index: 99999 !important;
+            transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+        }
+
+        .drawer-toggle-btn:hover {
+            transform: translateY(-3px) scale(1.04) !important;
+            box-shadow: 0 16px 36px -4px rgba(168, 85, 247, 0.9), 0 0 25px rgba(99, 102, 241, 0.7) !important;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 99990;
+        }
+
+        .drawer-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #right-sidebar-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 720px;
+            max-width: 94vw;
+            height: 100vh;
+            background: #0d121f;
+            border-left: 1px solid #2a364f;
+            box-shadow: -15px 0 40px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 99995;
+        }
+
+        #right-sidebar-drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 22px 28px;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #111827;
+        }
+
+        .drawer-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drawer-close-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .drawer-close-btn:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: #cbd5e1;
+        }
+
+        .drawer-item {
+            background: #131b2e;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .drawer-item h4 {
+            color: #818cf8;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .drawer-item p {
+            margin-bottom: 14px;
+        }
+
+        .drawer-item pre {
+            margin: 14px 0 !important;
+            padding: 16px !important;
+            background: #090d16 !important;
+            border: 1px solid #1f293d !important;
+            border-radius: 10px;
+            font-size: 0.92rem !important;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Responsive Media Queries */
+        @media (max-width: 1024px) {
+            .top-navbar {
+                padding: 14px 20px;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .top-nav-links {
+                gap: 14px;
+                flex-wrap: wrap;
+                font-size: 0.9rem;
+            }
+            #main-content {
+                padding: 24px 16px 100px 16px;
+            }
+            .hero-banner {
+                padding: 32px 24px;
+                margin-bottom: 32px;
+            }
+            .hero-title {
+                font-size: 2.2rem;
+            }
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            .section-box {
+                padding: 28px 20px;
+                margin-bottom: 32px;
+                border-radius: 16px;
+            }
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .section-header h2 {
+                font-size: 1.6rem;
+            }
+            .ten-sections-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            #right-sidebar-drawer {
+                width: 100vw;
+                max-width: 100vw;
+            }
+            .drawer-toggle-btn {
+                right: 18px !important;
+                bottom: 18px !important;
+                padding: 12px 18px !important;
+                font-size: 0.92rem !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                font-size: 1rem;
+                line-height: 1.65;
+            }
+            .top-navbar {
+                padding: 12px 16px;
+            }
+            .top-nav-brand {
+                font-size: 1.15rem;
+            }
+            .top-nav-links {
+                display: none;
+            }
+            #main-content {
+                padding: 16px 12px 90px 12px;
+            }
+            .hero-banner {
+                padding: 24px 16px;
+                border-radius: 14px;
+            }
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            .hero-subtitle {
+                font-size: 0.98rem;
+            }
+            .section-box {
+                padding: 20px 14px;
+                border-radius: 12px;
+            }
+            .section-header h2 {
+                font-size: 1.35rem;
+            }
+            .concept-title {
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .explanation-text {
+                font-size: 0.98rem;
+            }
+            .code-box {
+                border-radius: 10px;
+                margin: 16px 0;
+            }
+            .code-box-header {
+                font-size: 0.78rem;
+                padding: 10px 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .code-box pre {
+                padding: 14px !important;
+                font-size: 0.82rem !important;
+            }
+            .callout-box {
+                padding: 16px 18px;
+                font-size: 0.95rem;
+                margin: 18px 0;
+            }
+            .sec-card {
+                padding: 18px 16px;
+            }
+            .sec-card-title {
+                font-size: 1.15rem;
+            }
+            .sec-card-desc {
+                font-size: 0.92rem;
+            }
+            .drawer-header {
+                padding: 16px 18px;
+            }
+            .drawer-body {
+                padding: 16px;
+            }
+            .drawer-item {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            .drawer-item h4 {
+                font-size: 1.05rem;
+            }
+            .drawer-item pre {
+                font-size: 0.8rem !important;
+                padding: 12px !important;
+            }
+            .drawer-toggle-btn {
+                right: 14px !important;
+                bottom: 14px !important;
+                padding: 10px 16px !important;
+                font-size: 0.85rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="top-navbar">
+        <div class="top-nav-brand">
+            <i class="devicon-spring-plain" style="color: #6ee7b7; font-size: 1.6rem;"></i>
+            <span>DropZone Architecture Explainer</span>
+        </div>
+        <div class="top-nav-links">
+            <a href="#section-1-keywords">🔑 Section 1 Keywords</a>
+            <a href="#section-1">🐳 Section 1 Deep-Dive</a>
+            <a href="DropZone_Complete_Codebase_Learning_Guide.html" target="_blank">📖 Complete 45-Chapter Guide ↗</a>
+        </div>
+    </header>
+
+
+    
+
+    <main id="main-content">
+        <div class="hero-banner">
+            <div class="hero-badge"><i class="devicon-java-plain"></i> Master Learning Curriculum</div>
+            <h1 class="hero-title">DropZone Architecture & Code Deep-Dive</h1>
+            <p class="hero-subtitle">Every single concept, service, database, and background flow in the DropZone distributed microservices platform organized cleanly into 10 structured sections. Below, <strong>Section 1 (Infrastructure & Centralized Config)</strong> is fully coded and explained in exhaustive, step-by-step detail.</p>
+        </div>
+                <!-- Section 1 Core Keywords & Meanings -->
+        <section id="section-1-keywords" class="section-box">
+            <div class="section-header">
+                <span class="step-badge">Section 1 Glossary</span>
+                <h2>Section 1 Core Keywords & Concepts</h2>
+            </div>
+            <p>Master these <strong>8 foundational keywords</strong> before diving into the code for Section 1 (Docker Infrastructure & Centralized Config):</p>
+
+            <div class="ten-sections-grid">
+                <!-- Keyword 1: Docker Bridge Network -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">NETWORKING</span>
+                        <i class="devicon-docker-plain" style="font-size: 1.2rem; color: #38bdf8;"></i>
+                    </div>
+                    <div class="sec-card-title">Docker Bridge Network (<code>dropzone-net</code>)</div>
+                    <div class="sec-card-desc">An isolated virtual software network created by Docker Compose that allows all 14 containers to communicate with each other using container hostnames (e.g. <code>postgres:5432</code>, <code>kafka:29092</code>) rather than host IP addresses.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">dropzone-net</span>
+                        <span class="tech-tag">DNS Resolution</span>
+                        <span class="tech-tag">Network Isolation</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 2: Database-per-Service -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">DATA PATTERN</span>
+                        <i class="devicon-postgresql-plain" style="font-size: 1.2rem; color: #93c5fd;"></i>
+                    </div>
+                    <div class="sec-card-title">Database-per-Service Isolation</div>
+                    <div class="sec-card-desc">Each microservice connects exclusively to its own dedicated PostgreSQL database (e.g. <code>dropzone_user</code>, <code>dropzone_order</code>). Services are strictly forbidden from executing cross-database joins or accessing another service's tables directly.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">Loose Coupling</span>
+                        <span class="tech-tag">6 Isolated DBs</span>
+                        <span class="tech-tag">ACID Boundary</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 3: Logical WAL Replication -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">CDC PREREQUISITE</span>
+                        <i class="devicon-postgresql-plain" style="font-size: 1.2rem; color: #6ee7b7;"></i>
+                    </div>
+                    <div class="sec-card-title">Logical WAL (<code>wal_level=logical</code>)</div>
+                    <div class="sec-card-desc">PostgreSQL Write-Ahead Logging mode configured to decode row-level insert/update/delete change events into a structured stream. This allows Debezium CDC to read database mutations in real time without querying the database tables.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">wal_level=logical</span>
+                        <span class="tech-tag">Debezium Ingestion</span>
+                        <span class="tech-tag">Zero SQL Overhead</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 4: Centralized Config Server -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">CONFIG PATTERN</span>
+                        <i class="devicon-spring-plain" style="font-size: 1.2rem; color: #a5b4fc;"></i>
+                    </div>
+                    <div class="sec-card-title">Spring Cloud Config Server</div>
+                    <div class="sec-card-desc">A centralized HTTP server running on port 8888 that acts as the single source of truth for all YAML configurations, environment variables, database credentials, and Kafka topic names across the entire microservices fleet.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">@EnableConfigServer</span>
+                        <span class="tech-tag">Port 8888</span>
+                        <span class="tech-tag">Native Profile</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 5: Dynamic Config Import -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">BOOTSTRAP</span>
+                        <i class="devicon-spring-plain" style="font-size: 1.2rem; color: #fde68a;"></i>
+                    </div>
+                    <div class="sec-card-title">Spring <code>config.import</code></div>
+                    <div class="sec-card-desc">The modern Spring Boot 3 mechanism replacing <code>bootstrap.yml</code>. On startup, the microservice halts bean creation, reaches out to <code>http://localhost:8888</code>, loads its specific environment YAML, merges it with global properties, and then initializes.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">spring.config.import</span>
+                        <span class="tech-tag">Spring Boot 3</span>
+                        <span class="tech-tag">Zero Hardcoding</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 6: Fail-Fast Bootstrapping -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">RESILIENCE</span>
+                        <i class="devicon-spring-plain" style="font-size: 1.2rem; color: #fda4af;"></i>
+                    </div>
+                    <div class="sec-card-title">Fail-Fast (<code>fail-fast: true</code>)</div>
+                    <div class="sec-card-desc">A safety setting that immediately crashes the microservice JVM with a clear error message during startup if Config Server is unreachable, preventing services from booting with missing database credentials or default fallback configurations.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">fail-fast: true</span>
+                        <span class="tech-tag">Crash Early</span>
+                        <span class="tech-tag">Zero Half-Started Apps</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 7: Global Config Inheritance -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">DRY CONFIG</span>
+                        <i class="devicon-apache-plain" style="font-size: 1.2rem; color: #c084fc;"></i>
+                    </div>
+                    <div class="sec-card-title">Global Inheritance (<code>application.yml</code>)</div>
+                    <div class="sec-card-desc">A central YAML file inside <code>config-repo/</code> containing cluster-wide shared properties (Eureka URL, Kafka serializers, OpenTelemetry tracing config) that are automatically inherited by every microservice without duplication.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">config-repo/application.yml</span>
+                        <span class="tech-tag">Inheritance Hierarchy</span>
+                        <span class="tech-tag">DRY Principle</span>
+                    </div>
+                </div>
+
+                <!-- Keyword 8: Flyway Metadata Isolation -->
+                <div class="sec-card">
+                    <div class="sec-card-header">
+                        <span class="sec-card-num">MIGRATIONS</span>
+                        <i class="devicon-postgresql-plain" style="font-size: 1.2rem; color: #fb923c;"></i>
+                    </div>
+                    <div class="sec-card-title">Flyway Schema History Isolation</div>
+                    <div class="sec-card-desc">Automated database version control executing SQL scripts on startup. Setting service-specific history tables (e.g. <code>flyway_schema_history_audit</code>) prevents lock collisions and metadata corruption when multiple services share database clusters.</div>
+                    <div class="sec-card-tech">
+                        <span class="tech-tag">flyway.enabled: true</span>
+                        <span class="tech-tag">V1__init.sql</span>
+                        <span class="tech-tag">Zero Manual SQL</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1 DEEP DIVE -->
+                <section id="section-1" class="section-box">
+            <div class="section-header">
+                <span class="step-badge deep-dive">Section 1 Deep-Dive</span>
+                <h2>Docker Infrastructure & Centralized Config Backbone</h2>
+            </div>
+            
+            <p>Welcome to <strong>Section 1</strong>. This is where the entire DropZone platform starts. Before writing or running any Java microservice, you must understand two things: <strong>how the backing infrastructure containers are configured</strong> and <strong>how microservices retrieve their YAML configuration dynamically on boot</strong>.</p>
+
+            <div class="deepdive-container">
+                
+                <!-- ========================================== -->
+                <!-- 1.1 THE 14-CONTAINER INFRASTRUCTURE STACK -->
+                <!-- ========================================== -->
+                <h3 class="concept-title">1.1 The 14-Container Infrastructure Stack (`docker-compose.yml`)</h3>
+                <p class="explanation-text">
+                    DropZone provisions <strong>14 isolated backing infrastructure containers</strong> joined by a dedicated bridge network called <code>dropzone-net</code>. Below is the complete, line-by-line commented configuration for every service container.
+                </p>
+
+                <!-- 1.1.1 PostgreSQL -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #93c5fd; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-postgresql-plain"></i> 1.1.1 PostgreSQL 16 Relational Engine (Port 5432)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Hosts 6 isolated relational databases: <code>dropzone_user</code>, <code>dropzone_event</code>, <code>dropzone_inventory</code>, <code>dropzone_order</code>, <code>dropzone_payment</code>, and <code>dropzone_audit</code>.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; postgres (PostgreSQL 16 with Logical WAL)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  postgres:
+    image: postgres:16-alpine                                    # Lightweight alpine base image for PostgreSQL 16
+    container_name: dropzone-postgres                            # Fixed container name for internal DNS resolution
+    # wal_level=logical: Instructs PostgreSQL to emit structured row data into WAL for CDC
+    # max_wal_senders=10: Maximum number of concurrent streaming replication processes (Debezium + replicas)
+    # max_replication_slots=10: Prevents Postgres from deleting WAL logs before Debezium has consumed them
+    command: postgres -c wal_level=logical -c max_wal_senders=10 -c max_replication_slots=10
+    ports:
+      - "5432:5432"                                              # Host:Container port mapping for external psql access
+    environment:
+      POSTGRES_USER: dropzone                                    # Master superuser name
+      POSTGRES_PASSWORD: dropzone_secret_password                 # Master database password
+      POSTGRES_DB: dropzone                                      # Default initial database created on first startup
+    volumes:
+      - postgres_data:/var/lib/postgresql/data                   # Named volume to persist table data across restarts
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro # Init script creating all 6 microservice DBs
+    networks:
+      - dropzone-net                                             # Attach to the unified bridge network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dropzone"]              # Checks if postgres engine is accepting socket connections
+      interval: 5s                                               # Frequency between health probes
+      timeout: 5s                                                # Maximum probe response wait time
+      retries: 5                                                 # Mark unhealthy after 5 failed attempts</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.2 Redis -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #fda4af; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-redis-plain"></i> 1.1.2 Redis 7 In-Memory Cache & Distributed Locks (Port 6379)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Ultra-fast flash sale inventory stock counters (DECR operations), Redisson distributed locks, and idempotency deduplication tokens.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; redis (Redis 7 In-Memory Store)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  redis:
+    image: redis:7-alpine                                        # Official Redis 7 alpine image
+    container_name: dropzone-redis                              # Predictable container hostname
+    command: redis-server --appendonly yes                       # Enable Append-Only File (AOF) for disk durability
+    ports:
+      - "6379:6379"                                              # Expose standard Redis port to host
+    volumes:
+      - redis_data:/data                                         # Named volume for persistent AOF file storage
+    networks:
+      - dropzone-net                                             # Shared Docker network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]                         # Expects PONG response from server
+      interval: 5s                                               # Run health check every 5 seconds
+      timeout: 5s                                                # Timeout per check
+      retries: 5                                                 # 5 retries before declaring service unhealthy</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.3 Zookeeper & Kafka -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #fde68a; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-apachekafka-original"></i> 1.1.3 Zookeeper & Apache Kafka Event Streaming (Port 9092)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> High-throughput, distributed event log for microservice domain events (<code>order-events</code>, <code>payment-events</code>) and Debezium CDC ingestion.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; zookeeper & kafka</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0                       # Confluent enterprise-grade Zookeeper image
+    container_name: dropzone-zookeeper                          # Container name for cluster coordinator
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181                                # Internal port where Kafka connects to Zookeeper
+      ZOOKEEPER_TICK_TIME: 2000                                  # Basic time unit in milliseconds for session heartbeats
+    networks:
+      - dropzone-net                                             # Shared internal bridge network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0                           # Confluent Kafka 7.5 broker image
+    container_name: dropzone-kafka                              # Internal network DNS alias for microservices
+    ports:
+      - "9092:9092"                                              # Host port for developer workstations and UI tools
+    depends_on:
+      - zookeeper                                                # Ensures Zookeeper is running before broker boots
+    environment:
+      KAFKA_BROKER_ID: 1                                         # Unique broker numeric identifier in cluster
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181                    # Host and port to connect to Zookeeper coordinator
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT # Protocol mappings for internal/external
+      # Dual-listener setup:
+      # PLAINTEXT://kafka:29092   -> Used by other Docker containers inside 'dropzone-net'
+      # PLAINTEXT_HOST://localhost:9092 -> Used by host applications & local Java debuggers
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1                  # Single broker dev environment needs replication factor = 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"                    # Automatically provision topics upon first message publish
+    networks:
+      - dropzone-net                                             # Shared Docker network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]     # TCP socket port ping verification
+      interval: 10s                                              # Check every 10s
+      timeout: 5s                                                # 5s probe timeout
+      retries: 5                                                 # 5 attempts</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.4 Debezium CDC -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #67e8f9; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-apachekafka-original"></i> 1.1.4 Debezium 2.5 Change Data Capture (Port 8083)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Tails PostgreSQL Write-Ahead Logs (WAL) and automatically streams row modifications into Kafka without modifying application business code.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; debezium (Kafka Connect CDC Engine)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  debezium:
+    image: debezium/connect:2.5                                  # Official Debezium Kafka Connect container
+    container_name: dropzone-debezium                            # Fixed container name
+    ports:
+      - "8083:8083"                                              # REST API port for registering & managing CDC connectors
+    depends_on:
+      - kafka                                                    # Requires Kafka broker up and healthy
+      - postgres                                                 # Requires PostgreSQL logical WAL up and healthy
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092                             # Internal Kafka address inside docker-net
+      GROUP_ID: dropzone-debezium-group                          # Cluster group identifier for connector workers
+      CONFIG_STORAGE_TOPIC: debezium_configs                     # Kafka topic to store connector configuration state
+      OFFSET_STORAGE_TOPIC: debezium_offsets                     # Kafka topic to track last consumed WAL position (LSN)
+      STATUS_STORAGE_TOPIC: debezium_statuses                    # Kafka topic to store connector running status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1                       # Replication factor for single-broker setup
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1                       # Replication factor for single-broker setup
+      STATUS_STORAGE_REPLICATION_FACTOR: 1                       # Replication factor for single-broker setup
+    networks:
+      - dropzone-net                                             # Shared Docker network</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.5 RabbitMQ -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #fdba74; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-rabbitmq-original"></i> 1.1.5 RabbitMQ 3.12 Message Broker with Management UI (Ports 5672, 15672)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Handles task-based async point-to-point queues (email notifications, SMS alerts, PDF invoices) with Dead Letter Queues (DLQ) and exponential backoff.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; rabbitmq</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  rabbitmq:
+    image: rabbitmq:3.12-management-alpine                       # RabbitMQ broker with web management UI plugin pre-enabled
+    container_name: dropzone-rabbitmq                            # Predictable container hostname
+    ports:
+      - "5672:5672"                                              # AMQP protocol port used by Spring AMQP microservices
+      - "15672:15672"                                            # Web UI dashboard port (accessible at http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: dropzone                            # Default admin username
+      RABBITMQ_DEFAULT_PASS: dropzone_secret_password             # Default admin password
+    networks:
+      - dropzone-net                                             # Shared Docker network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]        # Uses rabbitmq-diagnostics to verify broker readiness
+      interval: 10s                                              # Probe interval
+      timeout: 5s                                                # Probe timeout
+      retries: 5                                                 # Fail count threshold</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.6 Keycloak -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #c084fc; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-java-plain"></i> 1.1.6 Keycloak 23 OpenID Connect & OAuth2 Identity Provider (Port 8080)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Issues cryptographically signed RS256 JWT access tokens, manages user realms, RBAC roles (<code>ROLE_CUSTOMER</code>, <code>ROLE_ADMIN</code>), and SSO.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; keycloak</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0                      # Official Quarkus-based Keycloak 23 runtime image
+    container_name: dropzone-keycloak                            # Keycloak container name
+    command: start-dev --import-realm                            # Start in local development mode and auto-import realm JSON
+    ports:
+      - "8080:8080"                                              # Expose OAuth2 / OpenID Connect authorization endpoint
+    environment:
+      KEYCLOAK_ADMIN: admin                                      # Initial master administrator username
+      KEYCLOAK_ADMIN_PASSWORD: admin                             # Initial master administrator password
+      KC_DB: postgres                                            # Use external PostgreSQL as persistent datastore
+      KC_DB_URL: jdbc:postgresql://postgres:5432/dropzone_user   # Connect to user DB instance inside docker network
+      KC_DB_USERNAME: dropzone                                   # PostgreSQL user
+      KC_DB_PASSWORD: dropzone_secret_password                   # PostgreSQL password
+      KC_HEALTH_ENABLED: "true"                                  # Expose /health endpoint for docker healthchecks
+      KC_METRICS_ENABLED: "true"                                 # Expose /metrics for Prometheus scraping
+    volumes:
+      - ./docker/keycloak/dropzone-realm.json:/opt/keycloak/data/import/dropzone-realm.json:ro # Pre-configured dropzone realm file
+    depends_on:
+      - postgres                                                 # Wait for PostgreSQL to boot before starting auth engine
+    networks:
+      - dropzone-net                                             # Shared Docker network</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.7 OpenSearch -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #6ee7b7; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-elasticsearch-plain"></i> 1.1.7 OpenSearch 2.11 Distributed Full-Text & Analytics Engine (Port 9200)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Sub-second full-text fuzzy search, geospatial venue queries, auto-complete suggestions, and aggregated catalog faceted filtering.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; opensearch</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  opensearch:
+    image: opensearchproject/opensearch:2.11.0                   # Official OpenSearch 2.11 image
+    container_name: dropzone-opensearch                          # Fixed container hostname
+    environment:
+      cluster.name: dropzone-search                              # Cluster identifier name
+      node.name: dropzone-search-node1                           # Individual node identifier
+      discovery.type: single-node                                # Single-node mode avoids multi-node quorum wait in dev
+      bootstrap.memory_lock: "true"                              # Lock JVM heap in RAM to prevent OS disk swapping
+      "OPENSEARCH_JAVA_OPTS": "-Xms512m -Xmx512m"               # Minimum and maximum JVM heap memory allocations
+      DISABLE_SECURITY_PLUGIN: "true"                            # Disables HTTPS/auth requirements for local development
+      DISABLE_INSTALL_DEMO_CONFIG: "true"                        # Skips demo TLS certificates installation
+    ulimits:
+      memlock:
+        soft: -1                                                 # Allow unlimited memory locking for JVM
+        hard: -1                                                 # Allow unlimited memory locking for JVM
+      nofile:
+        soft: 65536                                              # Maximum number of open file handles
+        hard: 65536                                              # Maximum number of open file handles
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data               # Persistent volume for Lucene indexes on disk
+    ports:
+      - "9200:9200"                                              # REST API HTTP port for search queries & indexing
+    networks:
+      - dropzone-net                                             # Shared Docker network</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.8 MinIO -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #f43f5e; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-amazonwebservices-original"></i> 1.1.8 MinIO S3-Compatible Distributed Object Storage (Ports 9000, 9001)
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> High-speed object storage for concert event banner artwork, seating charts, and user profile media assets.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; minio</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  minio:
+    image: minio/minio:latest                                    # Latest production MinIO object server image
+    container_name: dropzone-minio                               # Fixed container name
+    command: server /data --console-address ":9001"              # Start S3 API on :9000 and Web Admin Dashboard on :9001
+    ports:
+      - "9000:9000"                                              # Amazon S3 API compatible endpoint
+      - "9001:9001"                                              # Interactive Web Browser Management Console
+    environment:
+      MINIO_ROOT_USER: minioadmin                                # Master S3 access key
+      MINIO_ROOT_PASSWORD: minioadminpassword                    # Master S3 secret key
+    volumes:
+      - minio_data:/data                                         # Named volume storing raw media bytes on disk
+    networks:
+      - dropzone-net                                             # Shared Docker network</code></pre>
+                    </div>
+                </div>
+
+                <!-- 1.1.9 Observability Stack -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #a855f7; font-size: 1.15rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="devicon-grafana-plain"></i> 1.1.9 Unified Observability Stack: Prometheus, Grafana, OpenTelemetry, Loki & Tempo
+                    </h4>
+                    <p class="explanation-text">
+                        <strong>Role:</strong> Provides unified end-to-end distributed tracing, real-time JVM & HTTP metrics, and centralized microservice log aggregation.
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>docker-compose.yml &gt; Observability Containers (Prometheus, Grafana, OTEL, Loki, Tempo)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">  prometheus:
+    image: prom/prometheus:v2.48.0                               # Prometheus time-series metric collector
+    container_name: dropzone-prometheus                          # Container name
+    ports:
+      - "9090:9090"                                              # Prometheus web query UI & scrapers
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro # Scrapes all microservices /actuator/prometheus
+    networks:
+      - dropzone-net                                             # Shared Docker network
+
+  grafana:
+    image: grafana/grafana:10.2.0                                # Grafana visualization dashboard
+    container_name: dropzone-grafana                             # Container name
+    ports:
+      - "3000:3000"                                              # Web UI dashboard on http://localhost:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin                              # Admin login user
+      GF_SECURITY_ADMIN_PASSWORD: admin                          # Admin login password
+    volumes:
+      - grafana_data:/var/lib/grafana                            # Persistent dashboard definitions and user profiles
+    networks:
+      - dropzone-net                                             # Shared Docker network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.90.0           # OpenTelemetry trace & metric ingestion collector
+    container_name: dropzone-otel-collector                      # Container hostname
+    command: ["--config=/etc/otel-collector-config.yaml"]        # Load pipeline routing rules
+    volumes:
+      - ./docker/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"                                              # OTLP gRPC ingestion receiver
+      - "4318:4318"                                              # OTLP HTTP JSON ingestion receiver (used by Spring Boot 3)
+    networks:
+      - dropzone-net                                             # Shared Docker network
+
+  loki:
+    image: grafana/loki:2.9.2                                    # High-efficiency log aggregation engine
+    container_name: dropzone-loki                                # Container name
+    ports:
+      - "3100:3100"                                              # HTTP log push/query endpoint
+    command: -config.file=/etc/loki/local-config.yaml            # Load retention & storage config
+    networks:
+      - dropzone-net                                             # Shared Docker network
+
+  tempo:
+    image: grafana/tempo:2.3.1                                   # Distributed trace storage backend
+    container_name: dropzone-tempo                               # Container name
+    ports:
+      - "3200:3200"                                              # Tempo query port
+    command: ["-config.file=/etc/tempo.yaml"]                    # Trace retention and indexing rules
+    networks:
+      - dropzone-net                                             # Shared Docker network</code></pre>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- 1.2 CENTRALIZED CONFIG & DYNAMIC BOOTSTRAP -->
+                <!-- ========================================== -->
+                <h3 class="concept-title">1.2 Centralized Config Architecture & Dynamic Bootstrap</h3>
+                <p class="explanation-text">
+                    In enterprise microservice platforms, credentials, database connection strings, and Kafka topic names are <strong>never hardcoded</strong> inside individual service jars. Instead, DropZone uses <strong>Spring Cloud Config Server</strong> with a 4-step dynamic bootstrap architecture:
+                </p>
+
+                <!-- Step 1: Microservice application.yml -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #a5b4fc; font-size: 1.15rem; margin-bottom: 10px;">
+                        Step 1: The Microservice Local Bootstrap File (`user-service/src/main/resources/application.yml`)
+                    </h4>
+                    <p class="explanation-text">
+                        Every microservice has a minimal local <code>application.yml</code> containing zero passwords or database URLs. Its only job is to declare its name and connect to Config Server on startup:
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>services/user-service/src/main/resources/application.yml</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">server:
+  port: 8081                                                     # Local HTTP port for this microservice
+
+spring:
+  application:
+    name: user-service                                           # Unique service identifier passed to Config Server
+  profiles:
+    active: development                                          # Active profile requesting 'user-service-development.yml'
+  config:
+    # Tell Spring Boot 3 to fetch remote properties from Config Server at :8888 before initializing beans
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  cloud:
+    config:
+      fail-fast: true                                            # Halt startup with fatal error if Config Server is offline
+
+eureka:
+  instance:
+    prefer-ip-address: true                                      # Register IP rather than transient container hostname
+    instance-id: ${spring.application.name}:${random.value}      # Unique instance ID for Eureka load balancing
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/} # Location of Eureka Service Discovery registry</code></pre>
+                    </div>
+                </div>
+
+                <!-- Step 2: Config Server -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #a5b4fc; font-size: 1.15rem; margin-bottom: 10px;">
+                        Step 2: Config Server Engine (`ConfigServerApplication.java` & `application.yml`)
+                    </h4>
+                    <p class="explanation-text">
+                        Config Server runs on port <code>8888</code> with <code>@EnableConfigServer</code> and uses the <code>native</code> profile to serve YAML files directly from the local <code>config-repo/</code> directory:
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>services/config-server/.../ConfigServerApplication.java</span>
+                            <span>JAVA</span>
+                        </div>
+                        <pre><code class="language-java">package com.dropzone.configserver;
+
+import org.springframework.boot.SpringApplication;                // Spring Boot application bootstrapper
+import org.springframework.boot.autoconfigure.SpringBootApplication; // Enables auto-configuration and component scanning
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient; // Registers Config Server itself in Eureka
+import org.springframework.cloud.config.server.EnableConfigServer; // Activates Spring Cloud Config Server REST controllers
+
+@SpringBootApplication                                           // Marks primary Spring Boot entry point
+@EnableConfigServer                                              // Exposes /${application}/${profile} configuration REST endpoints
+@EnableDiscoveryClient                                           // Enables Eureka client heartbeats so peers can discover config
+public class ConfigServerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args); // Starts embedded Tomcat server on port 8888
+    }
+}</code></pre>
+                    </div>
+
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>services/config-server/src/main/resources/application.yml</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">server:
+  port: 8888                                                     # Dedicated port for Centralized Configuration Server
+
+spring:
+  application:
+    name: CONFIG-SERVER                                          # Registry name visible in Eureka dashboard
+  cloud:
+    config:
+      server:
+        native:
+          # Search locations: looks inside classpath and relative paths for config-repo directory
+          search-locations: ${CONFIG_REPO_PATH:classpath:/config-repo,file:${user.dir}/../../config-repo,file:${user.dir}/config-repo}
+  profiles:
+    active: native                                               # Activates local filesystem search rather than remote Git
+
+eureka:
+  instance:
+    prefer-ip-address: true                                      # Broadcast IP address to cluster
+    instance-id: ${spring.application.name}:${random.value}      # Unique instance identifier
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/} # Register with Eureka cluster</code></pre>
+                    </div>
+                </div>
+
+                <!-- Step 3: Shared Global Configuration -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #a5b4fc; font-size: 1.15rem; margin-bottom: 10px;">
+                        Step 3: Global Shared Configuration (`config-repo/application.yml`)
+                    </h4>
+                    <p class="explanation-text">
+                        Any property defined in <code>config-repo/application.yml</code> is <strong>automatically inherited by all 11 microservices</strong> across the entire cluster:
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>config-repo/application.yml (Shared Global Microservice Settings)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml"># Global base configuration inherited by all 11 microservices
+spring:
+  eureka:
+    client:
+      service-url:
+        defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/} # Uniform Eureka registry location
+  kafka:
+    listener:
+      observation-enabled: true                                  # Enables Micrometer / OTEL tracing across Kafka consumers
+    template:
+      observation-enabled: true                                  # Enables Micrometer / OTEL tracing across Kafka producers
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,traces,env       # Expose essential Actuator observability endpoints
+  endpoint:
+    health:
+      show-details: always                                       # Display full DB, Redis, and disk component health checks
+    prometheus:
+      enabled: true                                              # Enable /actuator/prometheus metrics scrapers
+  metrics:
+    export:
+      prometheus:
+        enabled: true                                            # Export metrics in Prometheus format
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true                               # Track latency percentiles (p50, p95, p99) on HTTP endpoints
+  tracing:
+    sampling:
+      probability: 1.0                                           # 1.0 = Sample 100% of all requests for distributed tracing
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces} # Send trace spans to OTEL Collector</code></pre>
+                    </div>
+                </div>
+
+                <!-- Step 4: Service-Specific Configuration -->
+                <div style="margin: 28px 0 36px 0;">
+                    <h4 style="color: #a5b4fc; font-size: 1.15rem; margin-bottom: 10px;">
+                        Step 4: Service-Specific Configuration (`config-repo/user-service-dev.yml`)
+                    </h4>
+                    <p class="explanation-text">
+                        Each service has its own dedicated YAML file for database credentials, Flyway migrations, and service-specific parameters:
+                    </p>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <span>config-repo/user-service-dev.yml (User Service Database & Flyway Config)</span>
+                            <span>YAML</span>
+                        </div>
+                        <pre><code class="language-yaml">spring:
+  datasource:
+    # Dynamic PostgreSQL connection URL targeting the dedicated 'dropzone_user' database
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/dropzone_user}
+    username: dropzone                                           # Database login user
+    password: dropzone_secret_password                           # Database password
+    driver-class-name: org.postgresql.Driver                     # PostgreSQL JDBC driver class
+  jpa:
+    hibernate:
+      ddl-auto: validate                                         # Do not alter DB schema automatically; validate against Flyway
+    show-sql: true                                               # Print formatted SQL statements to stdout for debugging
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect         # Target PostgreSQL dialect
+  flyway:
+    enabled: true                                                # Run schema migrations on microservice startup
+    locations: classpath:db/migration                            # Directory containing V1__init_user_schema.sql scripts
+    baseline-on-migrate: true                                    # Baseline existing schema if already present</code></pre>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- 1.3 SECTION 1 VERIFICATION CHECKLIST -->
+                <!-- ========================================== -->
+                <h3 class="concept-title">1.3 Section 1 Hands-On Verification Checklist</h3>
+                <p class="explanation-text">
+                    Verify that your local environment matches the production architecture by executing these terminal commands:
+                </p>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <span>Terminal Verification Commands</span>
+                        <span>BASH</span>
+                    </div>
+                    <pre><code class="language-bash"># 1. Start all 14 backing infrastructure containers
+docker compose up -d
+
+# 2. Verify all containers are in 'Up (healthy)' state
+docker compose ps
+
+# 3. Test PostgreSQL Logical WAL replication slots
+docker exec -it dropzone-postgres psql -U dropzone -d dropzone_order -c "SELECT slot_name, plugin, active FROM pg_replication_slots;"
+
+# 4. Verify Config Server is serving dynamic YAML for user-service
+curl http://localhost:8888/user-service/development</code></pre>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="section-box">
+            <div class="section-header">
+                <span class="step-badge">Roadmap Summary</span>
+                <h2>What Comes Next in Section 2?</h2>
+            </div>
+            <p>Now that you understand how infrastructure containers and configuration delivery work, <strong>Section 2</strong> explores <strong>Eureka Service Discovery (Port 8761)</strong>: how microservices broadcast their heartbeat, locate peers dynamically, and resolve service names without DNS or hardcoded hostnames.</p>
+        </section>
+
+                <footer>
+            <p>DropZone Master Explainer • 10-Section Architecture Roadmap</p>
+        </footer>
+    </main>
+
+    <!-- Expandable Right Sidebar Drawer Trigger Button -->
+    <button id="drawer-toggle" class="drawer-toggle-btn" title="Open Deep Explanations & Notes">
+        <span>📖 Deep Explanations</span>
+    </button>
+
+    <!-- Overlay backdrop -->
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+
+    <!-- Right Expandable Sidebar Drawer -->
+    <aside id="right-sidebar-drawer">
+        <div class="drawer-header">
+            <div class="drawer-title">
+                <i class="devicon-postgresql-plain" style="color: #6ee7b7;"></i>
+                <span>Deep Architecture Explanations</span>
+            </div>
+            <button id="drawer-close" class="drawer-close-btn" title="Close Panel">✕</button>
+        </div>
+        <div class="drawer-body" id="drawer-content-area">
+            <!-- Deep Explanation: Unified Observability Stack (LGTM + OTEL) -->
+            <div class="drawer-item" id="exp-observability-stack">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #223049; padding-bottom: 12px;">
+                    <h4 style="margin: 0; color: #c084fc; font-size: 1.35rem;">📊 The 3 Pillars of Observability (Metrics, Logs, Traces)</h4>
+                    <span class="tech-tag" style="background: rgba(192,132,252,0.2); color: #e9d5ff;">Full Stack Telemetry</span>
+                </div>
+
+                <!-- 1. The Core Metaphor -->
+                <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #c084fc; margin-bottom: 8px; font-size: 1.1rem;">💡 The Hospital Monitoring Analogy</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        • <strong>1. Metrics (Prometheus):</strong> The Heart Rate Monitor — tells you <em>"Heart rate is spiking to 180 BPM!"</em> (e.g. API Error rate &gt; 5%).<br>
+                        • <strong>2. Traces (Tempo + OpenTelemetry):</strong> The X-Ray / CT Scan — tracks the exact path a request traveled through 6 microservices: Gateway (10ms) ➔ Order (40ms) ➔ Payment (500ms!).<br>
+                        • <strong>3. Logs (Loki):</strong> The Doctor's Notes — the exact error message: <code>NullPointerException at line 42</code>.<br>
+                        • <strong>4. Dashboard (Grafana):</strong> The Single TV Screen displaying all three in one unified window!
+                    </p>
+                </div>
+
+                <!-- 2. The 5 Tools & Their Jobs -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">1. How the 5 Tools Connect</h5>
+                <div style="background: #090d16; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.8; color: #94a3b8;">
+                    <span style="color: #38bdf8;">[1. OpenTelemetry Collector (Port 4318)]</span> ──► The Receptionist. Ingests raw telemetry from all Spring Boot apps via OTLP protocol.<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├──► Sends Traces ────► <span style="color: #a855f7;">[Tempo (Port 3200)]</span> (Stores trace spans & call graphs)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► Sends Metrics ───► <span style="color: #fde68a;">[Prometheus (Port 9090)]</span> (Stores numbers/counters)<br><br>
+                    <span style="color: #6ee7b7;">[2. Loki (Port 3100)]</span> ───────────────► Stores indexed logs sent from microservices.<br><br>
+                    <span style="color: #f43f5e;">[3. Grafana (Port 3000)]</span> ────────────► The Single Pane of Glass. Correlates Trace ID ➔ Log ➔ Metric!
+                </div>
+
+                <!-- 3. The Power of Correlation -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">2. The "Superpower": Trace-to-Log Correlation</h5>
+                <p style="font-size: 0.98rem; line-height: 1.7;">
+                    In traditional architectures, when an order fails, you grep through 10 separate log files looking for what happened.<br><br>
+                    In DropZone's stack, every HTTP request receives a unique <strong>Trace ID</strong> (e.g. <code>c8b3a109f28d</code>). Spring Boot 3 automatically injects this Trace ID into every log line and database query. Inside Grafana, you can click on a slow trace span in <strong>Tempo</strong> and instantly see the exact error logs in <strong>Loki</strong> with one click!
+                </p>
+            </div>
+
+            <!-- Deep Explanation: Features of ZooKeeper vs Kafka -->
+            <div class="drawer-item" id="exp-zk-vs-kafka">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #223049; padding-bottom: 12px;">
+                    <h4 style="margin: 0; color: #a5b4fc; font-size: 1.35rem;">⚖️ Feature Breakdown: ZooKeeper vs. Kafka</h4>
+                    <span class="tech-tag" style="background: rgba(165,180,252,0.2); color: #c7d2fe;">Architecture Deep-Dive</span>
+                </div>
+
+                <!-- Simple Side-by-Side Connected Analogy -->
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #93c5fd; margin-bottom: 12px; font-size: 1.15rem;">🤝 How Their Features Connect (The Airport Analogy)</h5>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.95rem;">
+                        <div style="background: #090d16; padding: 14px; border-radius: 8px; border-left: 3px solid #fde68a;">
+                            <strong style="color: #fde68a;">🐘 ZooKeeper (The Airport Tower)</strong>
+                            <ul style="margin: 8px 0 0 16px; line-height: 1.6; color: #cbd5e1;">
+                                <li><strong>Heartbeats:</strong> Tracks which planes are in the air.</li>
+                                <li><strong>Leader Election:</strong> Assigns which plane lands on Runway 1.</li>
+                                <li><strong>Catalog (Metadata):</strong> Stores the flight schedule board.</li>
+                                <li><strong>Failover:</strong> If a runway closes, diverts traffic instantly.</li>
+                            </ul>
+                        </div>
+                        <div style="background: #090d16; padding: 14px; border-radius: 8px; border-left: 3px solid #86efac;">
+                            <strong style="color: #86efac;">⚡ Kafka (The Cargo Planes)</strong>
+                            <ul style="margin: 8px 0 0 16px; line-height: 1.6; color: #cbd5e1;">
+                                <li><strong>High-Volume Cargo:</strong> Carries millions of packages (events).</li>
+                                <li><strong>Partition Tracks:</strong> Has multiple parallel cargo bays.</li>
+                                <li><strong>Zero-Copy Speed:</strong> Loads/unloads at physical hardware speed.</li>
+                                <li><strong>Replay History:</strong> Keeps packages in storage for days.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem; text-align: left; background: #090d16; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #1e293b; color: #fff;">
+                                <th style="padding: 10px 14px;">Capability</th>
+                                <th style="padding: 10px 14px;">🐘 Apache ZooKeeper</th>
+                                <th style="padding: 10px 14px;">⚡ Apache Kafka</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Primary Purpose</td>
+                                <td style="padding: 10px 14px; color: #fde68a;"><strong>Distributed Coordinator & Consensus</strong></td>
+                                <td style="padding: 10px 14px; color: #86efac;"><strong>High-Throughput Distributed Event Log</strong></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Data Structure</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">Hierarchical tree of nodes (<code>znodes</code>, like a file system in RAM)</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">Append-only ordered partition commit logs on disk</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Data Size Handled</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">Small metadata (KB to few MBs per node)</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">Huge message streams (GBs to Terabytes/second)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Consensus Algorithm</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;"><strong>ZAB (ZooKeeper Atomic Broadcast)</strong></td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">ISR (In-Sync Replicas) / KRaft (Raft algorithm)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Key Killer Features</td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">
+                                    • <strong>Ephemeral znodes:</strong> Auto-deleted when client disconnects (detects dead brokers)<br>
+                                    • <strong>Watchers:</strong> Push notifications on metadata change<br>
+                                    • <strong>Leader election:</strong> Strictly linearizable consensus
+                                </td>
+                                <td style="padding: 10px 14px; color: #cbd5e1;">
+                                    • <strong>Zero-Copy Transfer:</strong> Uses OS sendfile for wire-speed I/O<br>
+                                    • <strong>Consumer Groups:</strong> Automatic scale-out load balancing<br>
+                                    • <strong>Message Replay:</strong> Consumers can re-read past events anytime
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">DropZone Use Case</td>
+                                <td style="padding: 10px 14px; color: #fde68a;">Tracks Kafka broker <code>id=1</code> health & topic metadata</td>
+                                <td style="padding: 10px 14px; color: #86efac;">Streams <code>order-events</code>, <code>payment-events</code>, and Debezium CDC</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Deep Explanation: Why ZooKeeper is Needed for Kafka -->
+            <div class="drawer-item" id="exp-zookeeper-role">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #223049; padding-bottom: 12px;">
+                    <h4 style="margin: 0; color: #fde68a; font-size: 1.35rem;">🐘 Why Does Apache Kafka Need ZooKeeper?</h4>
+                    <span class="tech-tag" style="background: rgba(253, 230, 138, 0.2); color: #fde68a;">Cluster Coordinator</span>
+                </div>
+
+                <!-- Simple Analogy -->
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #fde68a; margin-bottom: 8px; font-size: 1.1rem;">💡 The Traffic Control Tower Analogy</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        Think of Kafka brokers like <strong>airplanes moving cargo (messages)</strong>, and ZooKeeper as the <strong>air traffic control tower</strong>.<br><br>
+                        • Kafka brokers store and stream messages.<br>
+                        • ZooKeeper coordinates the cluster: it tracks which brokers are alive, elects the leader broker, and coordinates topic partition ownership.
+                    </p>
+                </div>
+
+                <!-- 4 Core Responsibilities -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">1. The 4 Key Jobs of ZooKeeper</h5>
+                <div style="background: #090d16; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.8; color: #94a3b8;">
+                    <span style="color: #38bdf8;">1. Controller Election:</span> When multiple Kafka brokers run, ZooKeeper elects one broker as the <strong>Controller</strong> to manage partition assignments.<br><br>
+                    <span style="color: #a5b4fc;">2. Broker Heartbeat Membership:</span> Brokers send periodic heartbeats (every 2000ms). If a broker crashes, ZooKeeper detects it and tells other brokers to take over its partitions.<br><br>
+                    <span style="color: #6ee7b7;">3. Topic Metadata & Partitions:</span> Keeps the catalog of all topics (e.g. <code>order-events</code>), how many partitions they have (P0, P1, P2), and which broker is the active leader for each partition.<br><br>
+                    <span style="color: #fda4af;">4. Access Control Lists (ACLs):</span> Stores cluster security permissions and client quotas.
+                </div>
+
+                <!-- Common Question: Does ZooKeeper stop Kafka from dying? -->
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 18px; margin-top: 20px;">
+                    <h5 style="color: #818cf8; margin-bottom: 8px; font-size: 1.1rem;">💡 Does ZooKeeper prevent Kafka from dying?</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        <strong>No, ZooKeeper cannot stop a server from crashing</strong> (if a machine loses power or runs out of RAM, it will still die).<br><br>
+                        <strong>What ZooKeeper DOES do:</strong><br>
+                        • <strong>Instant Detection (&lt;2s):</strong> When a broker dies, its ZooKeeper heartbeat stops and its ephemeral node disappears.<br>
+                        • <strong>Automatic Failover:</strong> ZooKeeper immediately elects a backup broker to take over the dead broker's topic partitions.<br>
+                        • <strong>Zero Downtime for the Cluster:</strong> From the outside (your microservices), the overall Kafka system keeps working without human intervention.
+                    </p>
+                </div>
+
+                <!-- Can we run Kafka with NO ZooKeeper and NO KRaft? -->
+                <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; padding: 18px; margin-top: 24px;">
+                    <h5 style="color: #fda4af; margin-bottom: 8px; font-size: 1.1rem;">❓ Can we run Kafka with NEITHER ZooKeeper NOR KRaft?</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #f1f5f9;">
+                        <strong>Short Answer: No, Kafka cannot start without either ZooKeeper or KRaft.</strong><br><br>
+                        • <strong>Why:</strong> Kafka is fundamentally a <em>consensus-driven distributed system</em>. Even on a single machine, it must know how to allocate topic partitions, track consumer group offsets, and manage write locks. That metadata <strong>must</strong> live in either ZooKeeper or KRaft.<br><br>
+                        • <strong>If you want NO ZooKeeper AND NO KRaft:</strong> You would replace Kafka with a simpler single-process message broker like <strong>RabbitMQ</strong> or <strong>Redis Streams</strong> (both of which are already running in DropZone!).
+                    </p>
+                </div>
+
+                <!-- What about KRaft (ZooKeeper-less Kafka)? -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">2. What is KRaft? (The Future of Kafka without ZooKeeper)</h5>
+                <p style="font-size: 0.98rem; line-height: 1.7;">
+                    In modern Kafka (v3.0+ and v4.0), Apache introduced <strong>KRaft (Kafka Raft Metadata Mode)</strong>, which removes ZooKeeper entirely by embedding a Raft consensus engine directly inside Kafka itself.<br><br>
+                    In DropZone's current Docker stack, <strong>Confluent Kafka 7.5.0 with ZooKeeper</strong> is used for enterprise backward compatibility and seamless integration with Debezium Connect.
+                </p>
+
+                <!-- Configuration in docker-compose.yml -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">3. How Kafka Connects to ZooKeeper</h5>
+                <div class="code-box" style="margin: 12px 0;">
+                    <div class="code-box-header">
+                        <span>docker-compose.yml (ZooKeeper & Kafka Link)</span>
+                        <span>YAML</span>
+                    </div>
+                    <pre><code class="language-yaml">  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181                                # Port Kafka talks to
+      ZOOKEEPER_TICK_TIME: 2000                                  # Heartbeat interval (2000ms)
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper                                                # Boot order guarantee
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181                    # Connects broker to coordinator</code></pre>
+                </div>
+            </div>
+
+            <!-- Deep Explanation: Exact DB Update Lifecycle & WAL Timeline -->
+            <div class="drawer-item" id="exp-db-update-lifecycle">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #223049; padding-bottom: 12px;">
+                    <h4 style="margin: 0; color: #38bdf8; font-size: 1.35rem;">⏱️ Timeline: When Exactly Does Data Get Written to PostgreSQL?</h4>
+                    <span class="tech-tag" style="background: rgba(56,189,248,0.2); color: #7dd3fc;">Engine Internals</span>
+                </div>
+
+                <!-- Summary Callout with Bottom Line -->
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #6ee7b7; margin-bottom: 8px; font-size: 1.1rem;">🎯 Bottom Line: Why This Architecture Exists</h5>
+                    <p style="margin: 0; font-size: 1.02rem; line-height: 1.7; color: #f1f5f9;">
+                        <strong>Yes, exactly!</strong> It gives you two massive wins:<br>
+                        • 🚀 <strong>Speed (Latency drops from ~3,000ms down to &lt;10ms):</strong> Services get instant event notifications directly off the sequential disk log without waiting for SQL polling intervals.<br>
+                        • 📉 <strong>Less Resources (DB CPU usage drops from ~70% to &lt;2%):</strong> Zero repeated <code>SELECT</code> queries hammering indexes and disk tables.
+                    </p>
+                </div>
+
+                <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #38bdf8; margin-bottom: 8px; font-size: 1.1rem;">⚡ Two Writes Under the Hood</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        1. <strong>Instant sequential WAL append on disk (Microseconds):</strong> Client gets `SUCCESS` immediately; Debezium streams it out to Kafka in parallel.<br>
+                        2. <strong>Background Table File Flush (Seconds later):</strong> Heavy random-access disk updates happen quietly in the background via DB checkpoints.
+                    </p>
+                </div>
+
+                <!-- Complete 5-Step Timeline -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">1. The Complete 5-Step Internal Timeline</h5>
+                <div style="background: #090d16; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.8; color: #94a3b8;">
+                    <span style="color: #818cf8;">Step 1: In-Memory Mutation (Shared Buffers)</span><br>
+                    &nbsp;&nbsp;• Microservice executes: <code>UPDATE orders SET status = 'PAID' WHERE id = 101;</code><br>
+                    &nbsp;&nbsp;• Postgres modifies the page in RAM buffer (marked as <em>"dirty page"</em>).<br>
+                    &nbsp;&nbsp;• Duration: <strong>~0.05ms</strong><br><br>
+
+                    <span style="color: #fde68a;">Step 2: WAL Disk Flush (Write-Ahead Log)</span><br>
+                    &nbsp;&nbsp;• Before telling the client "success", Postgres appends the exact change into the WAL log and runs <code>fsync()</code> to disk.<br>
+                    &nbsp;&nbsp;• <strong>Debezium reads the event right HERE!</strong> (instantly as WAL is written).<br>
+                    &nbsp;&nbsp;• Duration: <strong>~0.5ms</strong><br><br>
+
+                    <span style="color: #6ee7b7;">Step 3: COMMIT Returned to Microservice</span><br>
+                    &nbsp;&nbsp;• Postgres responds: <code>UPDATE 1 (Success)</code>.<br>
+                    &nbsp;&nbsp;• The transaction is 100% durable & crash-safe. If power drops now, Postgres will replay the WAL on reboot.<br><br>
+
+                    <span style="color: #fda4af;">Step 4: Background Table File Flush (Checkpointing)</span><br>
+                    &nbsp;&nbsp;• In the background (every few seconds or at checkpoint), PostgreSQL background writer writes dirty RAM pages to the permanent table storage files on disk (e.g. <code>base/16384/...</code>).<br>
+                    &nbsp;&nbsp;• Duration: <strong>Async background (zero client wait)</strong>
+                </div>
+
+                <!-- Why this two-tier design exists -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">2. Why Databases Use This Two-Step Write</h5>
+                <p>• <strong>Writing directly to table files is slow:</strong> Table rows are scattered randomly across huge gigabyte files on disk (Random I/O). Updating them synchronously for every request would destroy performance.<br>
+                • <strong>Appending to WAL is ultra-fast:</strong> The WAL is a single sequential file (Sequential I/O). Hard drives and SSDs write sequential logs at maximum hardware speeds (under 1 millisecond).</p>
+
+                <!-- Exact SQL to inspect Dirty Buffers & WAL in Docker -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">3. Live Inspection Command in DropZone</h5>
+                <p style="font-size: 0.95rem;">Run this command to see the current Write-Ahead Log position and checkpoint stats live inside your container:</p>
+                <div class="code-box" style="margin: 12px 0;">
+                    <div class="code-box-header">
+                        <span>Terminal Command</span>
+                        <span>BASH</span>
+                    </div>
+                    <pre><code class="language-bash">docker exec -it dropzone-postgres psql -U dropzone -d dropzone_order -c "SELECT pg_current_wal_lsn(), pg_walfile_name(pg_current_wal_lsn());"</code></pre>
+                </div>
+            </div>
+
+            
+            <!-- Deep Explanation: Logical WAL & Debezium CDC -->
+                        <!-- Deep Explanation: Logical WAL & Debezium CDC (Simplified & Visual) -->
+            <div class="drawer-item" id="exp-wal-cdc">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #223049; padding-bottom: 12px;">
+                    <h4 style="margin: 0; color: #818cf8; font-size: 1.35rem;">⚡ Complete Breakdown: PostgreSQL Logical WAL & Debezium CDC</h4>
+                    <span class="tech-tag" style="background: rgba(99,102,241,0.2); color: #c7d2fe;">CDC Fundamentals</span>
+                </div>
+
+                <!-- Debezium Exact Role Spotlight -->
+                <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #c084fc; margin-bottom: 8px; font-size: 1.1rem;">🌉 Debezium's Exact Role: The Reliable Bridge to Kafka</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        • <strong>Postgres WAL is already there:</strong> PostgreSQL writes the WAL file automatically as part of its core storage engine.<br>
+                        • <strong>Postgres cannot speak Kafka:</strong> Postgres is a database; it has no built-in network connection to Apache Kafka brokers.<br>
+                        • <strong>Debezium is the Bridge:</strong> Debezium connects to PostgreSQL's replication stream, converts the internal WAL binary events into standardized JSON/Avro messages, and delivers them directly into Kafka topics (with retry cursors, offset tracking, and schema preservation).
+                    </p>
+                </div>
+
+                <!-- Part 1: The Real-World Analogy -->
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <h5 style="color: #93c5fd; margin-bottom: 8px; font-size: 1.1rem;">💡 The Simple Kitchen Order Analogy</h5>
+                    <p style="margin: 0; font-size: 0.98rem; line-height: 1.7; color: #e2e8f0;">
+                        Imagine a restaurant kitchen. When a customer orders pasta, the waiter writes it on a <strong>continuous paper notepad (The WAL Log)</strong> before the chef cooks it on the pan (The Database Disk).<br><br>
+                        • <strong>Old Polling Method:</strong> An auditor runs into the kitchen every 2 seconds, shouting <em>"Did anyone order pasta yet?!"</em> — distracting the chef and wasting energy.<br>
+                        • <strong>CDC (Change Data Capture) Method:</strong> A helper simply reads the notepad stream as the waiter writes it down and whispers the new orders to the delivery drivers in real time. <strong>Zero chef interruption!</strong>
+                    </p>
+                </div>
+
+                <!-- Part 2: Step-by-Step Architecture Flow -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">1. Step-by-Step Architecture Flow</h5>
+                <div style="background: #090d16; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.7; color: #94a3b8;">
+                    <span style="color: #38bdf8;">[1. User Buys Ticket]</span> ──► Order Service writes SQL: <code>INSERT INTO orders (id, user_id, status) VALUES (101, 5, 'PAID');</code><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+                    <span style="color: #a5b4fc;">[2. Postgres WAL Write]</span> ──► PostgreSQL writes change to append-only <strong>WAL file</strong> on disk (takes ~0.5ms)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+                    <span style="color: #fde68a;">[3. wal_level=logical]</span> ──► Postgres decodes raw disk bytes into JSON data: <em>"Table: orders | New Row: id=101, status=PAID"</em><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+                    <span style="color: #fda4af;">[4. Debezium CDC Engine]</span> ──► Debezium captures the decoded stream instantly over a replication slot (&lt;10ms latency)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+                    <span style="color: #6ee7b7;">[5. Apache Kafka Event]</span> ──► Published to topic <code>dropzone.public.orders</code> for Notification, Audit & Search microservices.
+                </div>
+
+                <!-- Part 3: Why wal_level=logical is required -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">2. Why <code>wal_level=logical</code> is Required</h5>
+                <p>By default, PostgreSQL uses <code>wal_level=replica</code> or <code>minimal</code>. In default mode, the WAL only stores low-level hardware disk bytes (e.g. <em>"Modify offset 0x4F on block 82"</em>). Debezium cannot read table names or column values from raw disk bytes.<br><br>
+                Setting <strong><code>wal_level=logical</code></strong> tells PostgreSQL: <em>"Decode and preserve the column names, row IDs, and data values in the stream so external tools can understand what changed."</em></p>
+
+                <!-- Part 4: Docker Configuration Breakdown -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">3. Exact Configuration in DropZone (`docker-compose.yml`)</h5>
+                <div class="code-box" style="margin: 12px 0;">
+                    <div class="code-box-header">
+                        <span>docker-compose.yml (PostgreSQL Service Settings)</span>
+                        <span>YAML</span>
+                    </div>
+                    <pre><code class="language-yaml">  postgres:
+    image: postgres:16-alpine
+    container_name: dropzone-postgres
+    # wal_level=logical: Enables logical row decoding for Debezium CDC
+    # max_wal_senders=10: Allows up to 10 streaming replication connections
+    # max_replication_slots=10: Holds position cursor so logs aren't deleted before Debezium reads them
+    command: postgres -c wal_level=logical -c max_wal_senders=10 -c max_replication_slots=10
+    environment:
+      POSTGRES_USER: dropzone
+      POSTGRES_PASSWORD: dropzone_secret_password
+    ports:
+      - "5432:5432"</code></pre>
+                </div>
+
+                <!-- Part 5: Comparison Table -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">4. SQL Polling vs. Logical WAL CDC Comparison</h5>
+                <div style="overflow-x: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem; text-align: left; background: #090d16; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #1e293b; color: #fff;">
+                                <th style="padding: 10px 14px;">Feature</th>
+                                <th style="padding: 10px 14px;">SQL Polling (`SELECT...`)</th>
+                                <th style="padding: 10px 14px;">Logical WAL CDC (Debezium)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Database Impact</td>
+                                <td style="padding: 10px 14px; color: #fca5a5;">High CPU & disk I/O on repeated queries</td>
+                                <td style="padding: 10px 14px; color: #86efac;"><strong>Zero SQL load</strong> (reads append log)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Event Latency</td>
+                                <td style="padding: 10px 14px; color: #fca5a5;">Slow (2 – 5 seconds delay)</td>
+                                <td style="padding: 10px 14px; color: #86efac;"><strong>Real-time (&lt;10 milliseconds)</strong></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #1f293d;">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">Catches Deletes?</td>
+                                <td style="padding: 10px 14px; color: #fca5a5;">No (deleted rows vanish before polling)</td>
+                                <td style="padding: 10px 14px; color: #86efac;"><strong>Yes</strong> (captures delete tombstones)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 14px; font-weight: 600; color: #cbd5e1;">App Code Changes</td>
+                                <td style="padding: 10px 14px; color: #fca5a5;">Must write custom event sender code</td>
+                                <td style="padding: 10px 14px; color: #86efac;"><strong>Zero code changes</strong> (handled by DB)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Part 6: How to Test & Verify -->
+                <h5 style="color: #67e8f9; font-size: 1.15rem; margin: 24px 0 10px 0;">5. How to Inspect Live WAL Slots in Docker</h5>
+                <p style="font-size: 0.95rem;">You can run this command right now inside your terminal to verify that PostgreSQL has logical replication enabled and see if Debezium is streaming:</p>
+                <pre><code class="language-bash"># Run inside your terminal to check PostgreSQL replication slots:
+docker exec -it dropzone-postgres psql -U dropzone -d dropzone_order -c "SELECT slot_name, plugin, active FROM pg_replication_slots;"</code></pre>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Prism.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+
+    <!-- Drawer Logic -->
+    <script>
+        const drawer = document.getElementById('right-sidebar-drawer');
+        const drawerToggle = document.getElementById('drawer-toggle');
+        const drawerClose = document.getElementById('drawer-close');
+        const drawerOverlay = document.getElementById('drawer-overlay');
+
+        function openDrawer() {
+            drawer.classList.add('open');
+            drawerOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            drawerOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        if (drawerToggle) drawerToggle.addEventListener('click', openDrawer);
+        if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+        if (drawerOverlay) drawerOverlay.addEventListener('click', closeDrawer);
+
+        // Make the "Logical WAL" keyword card open the drawer directly
+        document.addEventListener('DOMContentLoaded', () => {
+            const walCard = document.querySelector('#section-1-keywords .sec-card:nth-child(3)');
+            if (walCard) {
+                walCard.style.cursor = 'pointer';
+                walCard.title = 'Click to open Deep Explanation Panel';
+                walCard.addEventListener('click', openDrawer);
+            }
+        });
+    </script>
+</body>
+</html>
